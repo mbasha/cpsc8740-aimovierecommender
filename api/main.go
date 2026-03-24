@@ -1,19 +1,34 @@
 package main
 
 import (
-    "fmt"
-    "log"
-    "net/http"
+	"log"
+	"net/http"
+	"os"
+
+	"movie-recommender/handlers"
+	"movie-recommender/middleware"
+	"movie-recommender/store"
+
+	"github.com/joho/godotenv"
 )
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "OK")
-}
-
 func main() {
-    mux := http.NewServeMux()
-    mux.HandleFunc("/health", healthHandler)
+	godotenv.Load("../.env")
 
-    log.Println("Server running on :8080")
-    log.Fatal(http.ListenAndServe(":8080", mux))
+	store.Init()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", middleware.WithCORS(handlers.Health))
+	mux.HandleFunc("/api/login", middleware.WithCORS(handlers.Login))
+	mux.HandleFunc("/api/rate", middleware.WithCORS(handlers.Rate))
+	mux.HandleFunc("/api/checkin", middleware.WithCORS(handlers.Checkin))
+	mux.HandleFunc("/api/movie", middleware.WithCORS(handlers.MovieDetail))
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("Server running on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
