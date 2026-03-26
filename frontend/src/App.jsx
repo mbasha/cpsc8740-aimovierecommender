@@ -1,35 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useApp } from "./context/AppContext";
+import Login from "./pages/Login";
+import CharacterSelect from "./pages/CharacterSelect";
+import RatingFlow from "./pages/RatingFlow";
+import Recommendations from "./pages/Recommendations";
+import Checkin from "./pages/Checkin";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const { user, character, recommendations } = useApp();
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  // Not logged in
+  if (!user) return <Login />;
+
+  // Returning user with existing recommendations — go to checkin
+  if (!user.isNew && user.recommendations?.length > 0 && recommendations.length === 0) {
+    return <Checkin />;
+  }
+
+  // Has fresh recommendations from this session — show library
+  if (recommendations.length > 0) return <Recommendations />;
+
+  // New user needs to pick character
+  if (!character) return <CharacterSelect />;
+
+  // Character picked, no recommendations yet — go to rating flow
+  return <RatingFlow />;
 }
-
-export default App

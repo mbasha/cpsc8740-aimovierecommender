@@ -1,5 +1,285 @@
 {
   "users": {
+    "test-4": {
+      "username": "test-4",
+      "character": "",
+      "ratings": {},
+      "recommendations": null,
+      "isNew": true
+    },
+    "test01": {
+      "username": "test01",
+      "character": "randy",
+      "ratings": {
+        "1": 5,
+        "296": 3,
+        "318": 5,
+        "356": 5,
+        "58559": 5,
+        "589": 4,
+        "593": 5
+      },
+      "recommendations": [
+        {
+          "movieId": 1178,
+          "title": "Paths of Glory (1957)",
+          "genres": "Drama|War",
+          "estimatedRating": 4.57,
+          "isNew": false
+        },
+        {
+          "movieId": 177593,
+          "title": "Three Billboards Outside Ebbing, Missouri (2017)",
+          "genres": "Crime|Drama",
+          "estimatedRating": 4.45,
+          "isNew": false
+        },
+        {
+          "movieId": 3451,
+          "title": "Guess Who's Coming to Dinner (1967)",
+          "genres": "Drama",
+          "estimatedRating": 4.37,
+          "isNew": false
+        },
+        {
+          "movieId": 1041,
+          "title": "Secrets \u0026 Lies (1996)",
+          "genres": "Drama",
+          "estimatedRating": 4.34,
+          "isNew": false
+        },
+        {
+          "movieId": 3435,
+          "title": "Double Indemnity (1944)",
+          "genres": "Crime|Drama|Film-Noir",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 3030,
+          "title": "Yojimbo (1961)",
+          "genres": "Action|Adventure",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 1104,
+          "title": "Streetcar Named Desire, A (1951)",
+          "genres": "Drama",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 1204,
+          "title": "Lawrence of Arabia (1962)",
+          "genres": "Adventure|Drama|War",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 27156,
+          "title": "Neon Genesis Evangelion: The End of Evangelion (Shin seiki Evangelion Gekijô-ban: Air/Magokoro wo, kimi ni) (1997)",
+          "genres": "Action|Animation|Drama|Fantasy|Sci-Fi",
+          "estimatedRating": 4.3,
+          "isNew": false
+        },
+        {
+          "movieId": 1172,
+          "title": "Cinema Paradiso (Nuovo cinema Paradiso) (1989)",
+          "genres": "Drama",
+          "estimatedRating": 4.29,
+          "isNew": false
+        }
+      ],
+      "isNew": false
+    },
+    "test02": {
+      "username": "test02",
+      "character": "randy",
+      "ratings": {
+        "1": 5,
+        "1104": 4,
+        "1172": 4,
+        "1204": 4,
+        "1258": 2,
+        "26587": 4,
+        "296": 4,
+        "318": 1,
+        "356": 1,
+        "58559": 2,
+        "589": 3,
+        "593": 3,
+        "8467": 5
+      },
+      "recommendations": [
+        {
+          "movieId": 1178,
+          "title": "Paths of Glory (1957)",
+          "genres": "Drama|War",
+          "estimatedRating": 4.57,
+          "isNew": false
+        },
+        {
+          "movieId": 177593,
+          "title": "Three Billboards Outside Ebbing, Missouri (2017)",
+          "genres": "Crime|Drama",
+          "estimatedRating": 4.45,
+          "isNew": false
+        },
+        {
+          "movieId": 3451,
+          "title": "Guess Who's Coming to Dinner (1967)",
+          "genres": "Drama",
+          "estimatedRating": 4.37,
+          "isNew": false
+        },
+        {
+          "movieId": 1041,
+          "title": "Secrets \u0026 Lies (1996)",
+          "genres": "Drama",
+          "estimatedRating": 4.34,
+          "isNew": false
+        },
+        {
+          "movieId": 3435,
+          "title": "Double Indemnity (1944)",
+          "genres": "Crime|Drama|Film-Noir",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 3030,
+          "title": "Yojimbo (1961)",
+          "genres": "Action|Adventure",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 27156,
+          "title": "Neon Genesis Evangelion: The End of Evangelion (Shin seiki Evangelion Gekijô-ban: Air/Magokoro wo, kimi ni) (1997)",
+          "genres": "Action|Animation|Drama|Fantasy|Sci-Fi",
+          "estimatedRating": 4.3,
+          "isNew": false
+        },
+        {
+          "movieId": 7121,
+          "title": "Adam's Rib (1949)",
+          "genres": "Comedy|Romance",
+          "estimatedRating": 4.28,
+          "isNew": true
+        },
+        {
+          "movieId": 3266,
+          "title": "Man Bites Dog (C'est arrivé près de chez vous) (1992)",
+          "genres": "Comedy|Crime|Drama|Thriller",
+          "estimatedRating": 4.28,
+          "isNew": true
+        },
+        {
+          "movieId": 1283,
+          "title": "High Noon (1952)",
+          "genres": "Drama|Western",
+          "estimatedRating": 4.28,
+          "isNew": true
+        }
+      ],
+      "isNew": false
+    },
+    "test03": {
+      "username": "test03",
+      "character": "",
+      "ratings": {},
+      "recommendations": null,
+      "isNew": true
+    },
+    "test04": {
+      "username": "test04",
+      "character": "valets",
+      "ratings": {
+        "1": 5,
+        "1041": 4,
+        "1172": 4,
+        "1204": 4,
+        "318": 5,
+        "356": 5,
+        "58559": 5,
+        "589": 4,
+        "593": 4
+      },
+      "recommendations": [
+        {
+          "movieId": 1178,
+          "title": "Paths of Glory (1957)",
+          "genres": "Drama|War",
+          "estimatedRating": 4.57,
+          "isNew": false
+        },
+        {
+          "movieId": 177593,
+          "title": "Three Billboards Outside Ebbing, Missouri (2017)",
+          "genres": "Crime|Drama",
+          "estimatedRating": 4.45,
+          "isNew": false
+        },
+        {
+          "movieId": 3451,
+          "title": "Guess Who's Coming to Dinner (1967)",
+          "genres": "Drama",
+          "estimatedRating": 4.37,
+          "isNew": false
+        },
+        {
+          "movieId": 3435,
+          "title": "Double Indemnity (1944)",
+          "genres": "Crime|Drama|Film-Noir",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 3030,
+          "title": "Yojimbo (1961)",
+          "genres": "Action|Adventure",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 1104,
+          "title": "Streetcar Named Desire, A (1951)",
+          "genres": "Drama",
+          "estimatedRating": 4.32,
+          "isNew": false
+        },
+        {
+          "movieId": 27156,
+          "title": "Neon Genesis Evangelion: The End of Evangelion (Shin seiki Evangelion Gekijô-ban: Air/Magokoro wo, kimi ni) (1997)",
+          "genres": "Action|Animation|Drama|Fantasy|Sci-Fi",
+          "estimatedRating": 4.3,
+          "isNew": false
+        },
+        {
+          "movieId": 7121,
+          "title": "Adam's Rib (1949)",
+          "genres": "Comedy|Romance",
+          "estimatedRating": 4.28,
+          "isNew": false
+        },
+        {
+          "movieId": 3266,
+          "title": "Man Bites Dog (C'est arrivé près de chez vous) (1992)",
+          "genres": "Comedy|Crime|Drama|Thriller",
+          "estimatedRating": 4.28,
+          "isNew": false
+        },
+        {
+          "movieId": 1283,
+          "title": "High Noon (1952)",
+          "genres": "Drama|Western",
+          "estimatedRating": 4.28,
+          "isNew": false
+        }
+      ],
+      "isNew": false
+    },
     "testuser": {
       "username": "testuser",
       "character": "randy",
