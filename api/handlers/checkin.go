@@ -10,8 +10,8 @@ import (
 
 func Checkin(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Username string          `json:"username"`
-		Watched  map[string]bool `json:"watched"`
+		Username string             `json:"username"`
+		Watched  map[string]float64 `json:"watched"`
 	}
 	json.NewDecoder(r.Body).Decode(&body)
 
@@ -21,10 +21,8 @@ func Checkin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for movieID, watched := range body.Watched {
-		if watched {
-			user.Ratings[movieID] = 4.0
-		}
+	for movieID, rating := range body.Watched {
+		user.Ratings[movieID] = rating
 	}
 
 	newRecs, err := clients.GetRecommendations(user.Ratings, 10)

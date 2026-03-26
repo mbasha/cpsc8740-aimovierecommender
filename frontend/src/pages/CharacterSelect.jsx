@@ -6,6 +6,7 @@ const characters = [
     name: "Randy Meeks",
     source: "Scream",
     emoji: "🎬",
+    buttonLabel: "Choose Randy",
     tagline: "I know the rules. Let me tell you which movies you survive.",
     description: "Horror obsessive. Cinephile. Will judge your taste."
   },
@@ -14,6 +15,7 @@ const characters = [
     name: "The Valets",
     source: "Key & Peele",
     emoji: "🎭",
+    buttonLabel: "Choose The Valets",
     tagline: "Oh SNAAAP. You came to the right guys.",
     description: "Encyclopedic knowledge. Maximum enthusiasm. Zero chill."
   },
@@ -22,6 +24,7 @@ const characters = [
     name: "Abed Nadir",
     source: "Community",
     emoji: "📽️",
+    buttonLabel: "Choose Abed",
     tagline: "Cool. Cool cool cool. Let's figure out your narrative arc.",
     description: "Analytical. Precise. Has seen everything twice."
   }
@@ -30,19 +33,15 @@ const characters = [
 export default function CharacterSelect() {
   const { user, setCharacter } = useApp();
 
-  function handleSelect(character) {
-    setCharacter(character);
-  }
-
   return (
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.header}>
-          <h1 style={styles.title}>who do you want to help you tonight?</h1>
+          <h1 style={styles.title}>Who do you want to help you tonight?</h1>
           <p style={styles.subtitle}>
-            pick your employee. they'll ask what you've seen.
+            Pick your employee. They'll ask what you've seen.
           </p>
-          <p style={styles.welcome}>welcome, {user?.username}.</p>
+          <p style={styles.welcome}>Welcome, {user?.username}.</p>
         </div>
         <div style={styles.grid}>
           {characters.map(char => (
@@ -59,9 +58,9 @@ export default function CharacterSelect() {
               <div style={styles.cardDesc}>{char.description}</div>
               <button
                 style={styles.btn}
-                onClick={() => handleSelect(char)}
+                onClick={() => setCharacter(char)}
               >
-                choose {char.name.split(" ")[0].toLowerCase()}
+                {char.buttonLabel}
               </button>
             </div>
           ))}

@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
 
-export default function MovieModal({ movie, onClose }) {
+export default function MovieModal({ movie, onClose, onHide }) {
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,27 +34,45 @@ export default function MovieModal({ movie, onClose }) {
       <div style={styles.modal}>
         <div style={styles.modalRow}>
           <div style={styles.poster}>
-            {details?.posterUrl
-              ? <img src={details.posterUrl} alt={movie.title} style={styles.posterImg} />
-              : <span style={styles.posterIcon}>🎬</span>
-            }
+            {movie.posterUrl || details?.posterUrl ? (
+              <img
+                src={movie.posterUrl || details?.posterUrl}
+                alt={movie.title}
+                style={styles.posterImg}
+              />
+            ) : (
+              <div style={styles.posterPlaceholder}>
+                <span style={styles.posterPlaceholderText}>{movie.title}</span>
+              </div>
+            )}
           </div>
           <div style={styles.content}>
             <div style={styles.title}>{movie.title}</div>
-            {details && (
-              <div style={styles.meta}>
-                {details.releaseDate?.split("-")[0]}
-                {details.rating ? ` · ★ ${Number(details.rating).toFixed(1)}` : ""}
-              </div>
-            )}
+            <div style={styles.metaRow}>
+              {details?.releaseDate && (
+                <span style={styles.metaItem}>
+                  {details.releaseDate.split("-")[0]}
+                </span>
+              )}
+              {details?.rating > 0 && (
+                <span style={styles.metaItem}>
+                  ★ {Number(details.rating).toFixed(1)} community rating
+                </span>
+              )}
+              <span style={styles.metaItem}>
+                {movie.estimatedRating.toFixed(2)} / 5.0 match score
+              </span>
+            </div>
             <div style={styles.genres}>{genres}</div>
-            {loading && <div style={styles.loadingText}>Loading details...</div>}
+            {loading && (
+              <div style={styles.loadingText}>Loading details...</div>
+            )}
             {details?.overview && (
               <p style={styles.overview}>{details.overview}</p>
             )}
             {details?.streaming?.length > 0 && (
               <div>
-                <div style={styles.streamLabel}>where to watch</div>
+                <div style={styles.streamLabel}>Where to watch</div>
                 <div style={styles.streamPills}>
                   {details.streaming.map(s => (
                     <a
@@ -70,7 +88,7 @@ export default function MovieModal({ movie, onClose }) {
                 </div>
               </div>
             )}
-            {details && !details.streaming?.length && (
+            {!loading && details && !details.streaming?.length && (
               <div style={styles.noStream}>
                 Not currently available on major streaming platforms.
               </div>
@@ -78,10 +96,12 @@ export default function MovieModal({ movie, onClose }) {
           </div>
         </div>
         <div style={styles.footer}>
-          <div style={styles.matchScore}>
-            match score: {movie.estimatedRating.toFixed(2)} / 5.0
-          </div>
-          <button style={styles.btnClose} onClick={onClose}>close</button>
+          <button style={styles.btnHide} onClick={onHide}>
+            Not for me
+          </button>
+          <button style={styles.btnClose} onClick={onClose}>
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -122,9 +142,6 @@ const styles = {
     border: "1px solid #e0dfd8",
     borderRadius: "8px",
     flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
     overflow: "hidden",
   },
   posterImg: {
@@ -132,8 +149,19 @@ const styles = {
     height: "100%",
     objectFit: "cover",
   },
-  posterIcon: {
-    fontSize: "32px",
+  posterPlaceholder: {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "8px",
+  },
+  posterPlaceholderText: {
+    fontSize: "11px",
+    color: "#aaa",
+    textAlign: "center",
+    lineHeight: "1.4",
   },
   content: {
     flex: 1,
@@ -147,9 +175,18 @@ const styles = {
     color: "#1a1a1a",
     lineHeight: "1.3",
   },
-  meta: {
-    fontSize: "13px",
-    color: "#aaa",
+  metaRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px",
+  },
+  metaItem: {
+    fontSize: "12px",
+    color: "#888",
+    background: "#f5f4ef",
+    border: "1px solid #e0dfd8",
+    borderRadius: "20px",
+    padding: "3px 10px",
   },
   genres: {
     fontSize: "12px",
@@ -198,9 +235,14 @@ const styles = {
     borderTop: "1px solid #e0dfd8",
     paddingTop: "16px",
   },
-  matchScore: {
-    fontSize: "12px",
-    color: "#aaa",
+  btnHide: {
+    padding: "8px 20px",
+    fontSize: "13px",
+    background: "#fff",
+    color: "#888",
+    border: "1px solid #e0dfd8",
+    borderRadius: "8px",
+    cursor: "pointer",
   },
   btnClose: {
     padding: "8px 20px",
@@ -209,5 +251,6 @@ const styles = {
     color: "#fff",
     border: "none",
     borderRadius: "8px",
+    cursor: "pointer",
   },
 };

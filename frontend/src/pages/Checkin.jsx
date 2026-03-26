@@ -11,25 +11,81 @@ const CHECKIN_LINES = {
   default: "Welcome back. Did you watch anything from your last list?",
 };
 
+const CHARACTER_NAMES = {
+  randy: "Randy",
+  valets: "The Valets",
+  abed: "Abed",
+};
+
+function InlineStarRating({ value, onChange }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "2px", marginTop: "6px" }}>
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          style={{
+            fontSize: "20px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: star <= (hovered || value) ? "#1a1a1a" : "#e0dfd8",
+            padding: "1px",
+            lineHeight: 1,
+          }}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onChange(star)}
+        >
+          ★
+        </button>
+      ))}
+      {value > 0 && (
+        <span style={{ fontSize: "11px", color: "#aaa", marginLeft: "4px" }}>{value} / 5</span>
+      )}
+    </div>
+  );
+}
+
 export default function Checkin() {
   const { user, setRecommendations } = useApp();
   const [watched, setWatched] = useState({});
+  const [watchedRatings, setWatchedRatings] = useState({});
   const [loading, setLoading] = useState(false);
 
   const previousRecs = user?.recommendations || [];
   const characterId = user?.character || "default";
   const checkinLine = CHECKIN_LINES[characterId] || CHECKIN_LINES.default;
+  const characterName = CHARACTER_NAMES[characterId];
 
   function toggleWatched(movieId, value) {
     setWatched(prev => ({ ...prev, [String(movieId)]: value }));
+    if (!value) {
+      setWatchedRatings(prev => {
+        const next = { ...prev };
+        delete next[String(movieId)];
+        return next;
+      });
+    }
+  }
+
+  function setRating(movieId, rating) {
+    setWatchedRatings(prev => ({ ...prev, [String(movieId)]: rating }));
   }
 
   async function handleSubmit() {
     setLoading(true);
     try {
+      const mergedRatings = {};
+      Object.entries(watched).forEach(([movieId, didWatch]) => {
+        if (didWatch) {
+          mergedRatings[movieId] = watchedRatings[movieId] || 4.0;
+        }
+      });
+
       const res = await axios.post(`${API}/api/checkin`, {
         username: user.username,
-        watched,
+        watched: mergedRatings,
       });
       setRecommendations(res.data.recommendations);
     } catch (e) {
@@ -54,22 +110,31 @@ export default function Checkin() {
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.header}>
-          <h1 style={styles.title}>welcome back, {user?.username}.</h1>
+          <h1 style={styles.title}>Welcome back, {user?.username}.</h1>
           <div style={styles.bubble}>{checkinLine}</div>
-          {characterId !== "default" && (
-            <div style={styles.attribution}>
-              — {characterId === "randy" ? "Randy" : characterId === "valets" ? "The Valets" : "Abed"}
-            </div>
+          {characterName && (
+            <div style={styles.attribution}>— {characterName}</div>
           )}
         </div>
 
         <div style={styles.list}>
           {previousRecs.map(rec => (
             <div key={rec.movieId} style={styles.row}>
-              <div style={styles.posterThumb}>🎬</div>
+              <div style={styles.posterThumb}>
+                {rec.posterUrl
+                  ? <img src={rec.posterUrl} alt={rec.title} style={styles.posterImg} />
+                  : <span style={{ fontSize: "18px" }}>🎬</span>
+                }
+              </div>
               <div style={styles.movieInfo}>
                 <div style={styles.movieTitle}>{rec.title}</div>
                 <div style={styles.movieGenres}>{rec.genres.replaceAll("|", " · ")}</div>
+                {watched[String(rec.movieId)] === true && (
+                  <InlineStarRating
+                    value={watchedRatings[String(rec.movieId)] || 0}
+                    onChange={rating => setRating(rec.movieId, rating)}
+                  />
+                )}
               </div>
               <div style={styles.btnPair}>
                 <button
@@ -79,7 +144,7 @@ export default function Checkin() {
                   }}
                   onClick={() => toggleWatched(rec.movieId, true)}
                 >
-                  watched it
+                  Watched it
                 </button>
                 <button
                   style={{
@@ -88,7 +153,7 @@ export default function Checkin() {
                   }}
                   onClick={() => toggleWatched(rec.movieId, false)}
                 >
-                  not yet
+                  Not yet
                 </button>
               </div>
             </div>
@@ -97,13 +162,13 @@ export default function Checkin() {
 
         <div style={styles.footer}>
           <button style={styles.btnSubmit} onClick={handleSubmit}>
-            update my list
+            Update my list
           </button>
           <button
             style={styles.btnSkip}
             onClick={() => setRecommendations(previousRecs)}
           >
-            skip, show my last list
+            Skip, show my last list
           </button>
         </div>
       </div>
@@ -119,7 +184,7 @@ const styles = {
     justifyContent: "center",
   },
   container: {
-    maxWidth: "600px",
+    maxWidth: "640px",
     width: "100%",
   },
   header: {
@@ -156,7 +221,7 @@ const styles = {
   row: {
     display: "flex",
     gap: "14px",
-    alignItems: "center",
+    alignItems: "flex-start",
     background: "#fff",
     border: "1px solid #e0dfd8",
     borderRadius: "10px",
@@ -171,8 +236,13 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "20px",
     flexShrink: 0,
+    overflow: "hidden",
+  },
+  posterImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
   },
   movieInfo: {
     flex: 1,
@@ -191,6 +261,7 @@ const styles = {
     display: "flex",
     gap: "8px",
     flexShrink: 0,
+    alignSelf: "flex-start",
   },
   btnWatched: {
     padding: "7px 14px",
@@ -199,6 +270,7 @@ const styles = {
     color: "#555",
     border: "1px solid #e0dfd8",
     borderRadius: "8px",
+    cursor: "pointer",
   },
   btnWatchedActive: {
     background: "#1a1a1a",
@@ -212,6 +284,7 @@ const styles = {
     color: "#555",
     border: "1px solid #e0dfd8",
     borderRadius: "8px",
+    cursor: "pointer",
   },
   btnNotYetActive: {
     background: "#f0efea",
@@ -231,6 +304,7 @@ const styles = {
     border: "none",
     borderRadius: "8px",
     fontWeight: "500",
+    cursor: "pointer",
   },
   btnSkip: {
     padding: "11px 20px",
@@ -239,6 +313,7 @@ const styles = {
     color: "#888",
     border: "1px solid #e0dfd8",
     borderRadius: "8px",
+    cursor: "pointer",
   },
   loadingCard: {
     background: "#fff",
