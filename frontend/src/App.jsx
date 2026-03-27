@@ -16,12 +16,12 @@ export default function App() {
     return <Checkin />;
   }
 
-  // Has fresh recommendations from this session — show library
+  // Has recommendations from this session — show library
   if (recommendations.length > 0) return <Recommendations />;
 
-  // New user needs to pick character
+  // New user or no character yet — pick character
   if (!character) return <CharacterSelect />;
 
-  // Character picked, no recommendations yet — go to rating flow
+  // Character picked, no recommendations — rate movies
   return <RatingFlow />;
 }

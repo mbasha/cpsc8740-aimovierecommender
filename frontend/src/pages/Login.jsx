@@ -5,7 +5,7 @@ import { useApp } from "../context/AppContext";
 const API = import.meta.env.VITE_API_URL;
 
 export default function Login() {
-  const { setUser, setRecommendations } = useApp();
+  const { initFromLogin } = useApp();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,8 +18,10 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.post(`${API}/api/login`, { username: username.trim() });
-      setUser(res.data);
+      const res = await axios.post(`${API}/api/login`, {
+        username: username.trim()
+      });
+      initFromLogin(res.data);
     } catch (e) {
       setError("Something went wrong. Is the server running?");
     } finally {
@@ -46,15 +48,15 @@ export default function Login() {
           </p>
           <div style={styles.features}>
             <div style={styles.feature}>
-              <span style={styles.featureIcon}>🎬</span>
+              <div style={styles.featureDot} />
               <span>Powered by collaborative filtering AI</span>
             </div>
             <div style={styles.feature}>
-              <span style={styles.featureIcon}>📺</span>
+              <div style={styles.featureDot} />
               <span>Real-time streaming availability</span>
             </div>
             <div style={styles.feature}>
-              <span style={styles.featureIcon}>🎭</span>
+              <div style={styles.featureDot} />
               <span>Three unique recommendation personalities</span>
             </div>
           </div>
@@ -65,7 +67,8 @@ export default function Login() {
         <div style={styles.loginCard}>
           <h2 style={styles.cardTitle}>Let's get started</h2>
           <p style={styles.cardSubtitle}>
-            No account needed. Just pick a username and we'll remember your taste for next time.
+            No account needed. Just pick a username and we'll remember
+            your taste for next time.
           </p>
           <div style={styles.inputGroup}>
             <label style={styles.label}>Your username</label>
@@ -81,17 +84,15 @@ export default function Login() {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button
-            style={{
-              ...styles.btn,
-              opacity: loading ? 0.7 : 1,
-            }}
+            style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
             onClick={handleLogin}
             disabled={loading}
           >
             {loading ? "Checking in..." : "Get my recommendations →"}
           </button>
           <p style={styles.hint}>
-            Returning user? Enter the same username to pick up where you left off.
+            Returning user? Enter the same username to pick up where
+            you left off.
           </p>
         </div>
       </div>
@@ -148,9 +149,11 @@ const styles = {
     fontSize: "14px",
     color: "#bbb",
   },
-  featureIcon: {
-    fontSize: "18px",
-    width: "28px",
+  featureDot: {
+    width: "6px",
+    height: "6px",
+    borderRadius: "50%",
+    background: "#555",
     flexShrink: 0,
   },
   right: {
@@ -213,6 +216,7 @@ const styles = {
     fontWeight: "500",
     marginBottom: "16px",
     transition: "opacity 0.15s ease",
+    cursor: "pointer",
   },
   hint: {
     fontSize: "12px",
