@@ -24,6 +24,12 @@ func main() {
 	mux.HandleFunc("/api/checkin", middleware.WithCORS(handlers.Checkin))
 	mux.HandleFunc("/api/movie", middleware.WithCORS(handlers.MovieDetail))
 	mux.HandleFunc("/api/next", middleware.WithCORS(handlers.Next))
+	mux.HandleFunc("/api/watchlist/add", middleware.WithCORS(handlers.WatchlistAdd))
+	mux.HandleFunc("/api/watchlist/remove", middleware.WithCORS(handlers.WatchlistRemove))
+	mux.HandleFunc("/api/watchlist", middleware.WithCORS(handlers.WatchlistGet))
+	mux.HandleFunc("/api/hidden/add", middleware.WithCORS(handlers.HiddenAdd))
+	mux.HandleFunc("/api/hidden/remove", middleware.WithCORS(handlers.HiddenRemove))
+	mux.HandleFunc("/api/hidden", middleware.WithCORS(handlers.HiddenGet))
 
 	port := os.Getenv("PORT")
 	if port == "" {

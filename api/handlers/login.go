@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"movie-recommender/db"
 	"movie-recommender/store"
 )
 
@@ -21,8 +22,25 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	user, exists := store.GetUser(body.Username)
 	if !exists {
 		user = store.NewUser(body.Username)
-		store.Save()
 	}
 
-	jsonOK(w, user)
+	watchlist := db.GetWatchlist(body.Username)
+	if watchlist == nil {
+		watchlist = []store.WatchlistItem{}
+	}
+
+	hidden := db.GetHidden(body.Username)
+	if hidden == nil {
+		hidden = []store.Recommendation{}
+	}
+
+	jsonOK(w, map[string]interface{}{
+		"username":        user.Username,
+		"character":       user.Character,
+		"isNew":           user.IsNew,
+		"ratings":         user.Ratings,
+		"recommendations": user.Recommendations,
+		"watchlist":       watchlist,
+		"hidden":          hidden,
+	})
 }
