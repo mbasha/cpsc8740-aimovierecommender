@@ -10,8 +10,9 @@ import (
 )
 
 type inferenceRequest struct {
-	Ratings map[string]float64 `json:"ratings"`
-	N       int                `json:"n"`
+	Ratings    map[string]float64 `json:"ratings"`
+	N          int                `json:"n"`
+	ExcludeIDs []int              `json:"exclude_ids"`
 }
 
 type inferenceResponse struct {
@@ -19,8 +20,17 @@ type inferenceResponse struct {
 }
 
 func GetRecommendations(ratings map[string]float64, n int) ([]store.Recommendation, error) {
+	return GetRecommendationsWithExclusions(ratings, n, nil)
+}
+
+func GetRecommendationsWithExclusions(ratings map[string]float64, n int, excludeIDs []int) ([]store.Recommendation, error) {
 	url := os.Getenv("PYTHON_SERVICE_URL") + "/recommend"
-	body, _ := json.Marshal(inferenceRequest{Ratings: ratings, N: n})
+
+	body, _ := json.Marshal(inferenceRequest{
+		Ratings:    ratings,
+		N:          n,
+		ExcludeIDs: excludeIDs,
+	})
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -18,15 +19,29 @@ type TMDBMovie struct {
 }
 
 func FetchTMDBMovie(title string) (*TMDBMovie, error) {
-	searchTitle := strings.Split(title, " (")[0]
-	searchTitle = strings.ReplaceAll(searchTitle, " ", "+")
+	// Extract year from title if present e.g. "Captain Fantastic (2016)"
+	year := ""
+	if idx := strings.Index(title, " ("); idx != -1 {
+		raw := title[idx+2:]
+		raw = strings.TrimSuffix(raw, ")")
+		raw = strings.TrimSpace(raw)
+		if len(raw) == 4 {
+			year = raw
+		}
+	}
 
-	url := fmt.Sprintf(
+	searchTitle := strings.Split(title, " (")[0]
+	searchTitle = url.QueryEscape(searchTitle)
+
+	queryURL := fmt.Sprintf(
 		"https://api.themoviedb.org/3/search/movie?query=%s&language=en-US&page=1",
 		searchTitle,
 	)
+	if year != "" {
+		queryURL += "&year=" + year
+	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", queryURL, nil)
 	if err != nil {
 		return nil, err
 	}

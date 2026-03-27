@@ -23,6 +23,7 @@ func main() {
 	mux.HandleFunc("/api/rate", middleware.WithCORS(handlers.Rate))
 	mux.HandleFunc("/api/checkin", middleware.WithCORS(handlers.Checkin))
 	mux.HandleFunc("/api/movie", middleware.WithCORS(handlers.MovieDetail))
+	mux.HandleFunc("/api/next", middleware.WithCORS(handlers.Next))
 
 	port := os.Getenv("PORT")
 	if port == "" {
