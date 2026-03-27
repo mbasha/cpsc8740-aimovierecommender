@@ -1,0 +1,94 @@
+{
+  "users": {
+    "test01": {
+      "username": "test01",
+      "character": "abed",
+      "ratings": {
+        "1": 5,
+        "1258": 3,
+        "158966": 1,
+        "1893": 4,
+        "2108": 1,
+        "296": 2,
+        "318": 5,
+        "356": 4,
+        "58559": 5,
+        "589": 4,
+        "593": 3
+      },
+      "recommendations": [
+        {
+          "movieId": 177593,
+          "title": "Three Billboards Outside Ebbing, Missouri (2017)",
+          "genres": "Crime|Drama",
+          "estimatedRating": 4.14,
+          "isNew": false
+        },
+        {
+          "movieId": 134881,
+          "title": "Love \u0026 Mercy (2014)",
+          "genres": "Drama",
+          "estimatedRating": 4.05,
+          "isNew": false
+        },
+        {
+          "movieId": 3451,
+          "title": "Guess Who's Coming to Dinner (1967)",
+          "genres": "Drama",
+          "estimatedRating": 4.04,
+          "isNew": false
+        },
+        {
+          "movieId": 27156,
+          "title": "Neon Genesis Evangelion: The End of Evangelion (Shin seiki Evangelion Gekijô-ban: Air/Magokoro wo, kimi ni) (1997)",
+          "genres": "Action|Animation|Drama|Fantasy|Sci-Fi",
+          "estimatedRating": 4.03,
+          "isNew": false
+        },
+        {
+          "movieId": 71899,
+          "title": "Mary and Max (2009)",
+          "genres": "Animation|Comedy|Drama",
+          "estimatedRating": 3.96,
+          "isNew": true
+        },
+        {
+          "movieId": 720,
+          "title": "Wallace \u0026 Gromit: The Best of Aardman Animation (1996)",
+          "genres": "Adventure|Animation|Comedy",
+          "estimatedRating": 3.96,
+          "isNew": true
+        },
+        {
+          "movieId": 8477,
+          "title": "Jetée, La (1962)",
+          "genres": "Romance|Sci-Fi",
+          "estimatedRating": 3.93,
+          "isNew": true
+        },
+        {
+          "movieId": 6460,
+          "title": "Trial, The (Procès, Le) (1962)",
+          "genres": "Drama",
+          "estimatedRating": 3.93,
+          "isNew": false
+        },
+        {
+          "movieId": 2239,
+          "title": "Swept Away (Travolti da un insolito destino nell'azzurro mare d'Agosto) (1975)",
+          "genres": "Comedy|Drama",
+          "estimatedRating": 3.92,
+          "isNew": false
+        },
+        {
+          "movieId": 1683,
+          "title": "Wings of the Dove, The (1997)",
+          "genres": "Drama|Romance",
+          "estimatedRating": 3.91,
+          "isNew": true
+        }
+      ],
+      "isNew": false
+    }
+  }
+}

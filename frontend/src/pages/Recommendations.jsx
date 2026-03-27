@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useApp } from "../context/AppContext";
 import MovieTile from "../components/MovieTile";
+import MovieTileSkeleton from "../components/MovieTileSkeleton";
 import MovieModal from "../components/MovieModal";
 
 const API = import.meta.env.VITE_API_URL;
@@ -25,97 +26,91 @@ export default function Recommendations() {
 
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [posters, setPosters] = useState({});
+  const [loadedPosters, setLoadedPosters] = useState(new Set());
 
   const characterLabel = CHARACTER_LABELS[user?.character] || "your crew";
+  const displayMovies = showHidden ? hiddenMovies : recommendations;
 
-  // Fetch all posters in parallel on load
+  // Fetch posters — each one resolves independently
   useEffect(() => {
-    async function fetchPosters() {
-      const allMovies = [...recommendations, ...hiddenMovies];
-      const results = await Promise.allSettled(
-        allMovies.map(async rec => {
-          try {
-            const res = await axios.get(`${API}/api/movie`, {
-              params: { title: rec.title }
-            });
-            return { movieId: rec.movieId, posterUrl: res.data.posterUrl };
-          } catch {
-            return { movieId: rec.movieId, posterUrl: null };
-          }
-        })
-      );
-      const posterMap = {};
-      results.forEach(result => {
-        if (result.status === "fulfilled" && result.value.posterUrl) {
-          posterMap[result.value.movieId] = result.value.posterUrl;
+    const allMovies = [...recommendations, ...hiddenMovies];
+    const toFetch = allMovies.filter(r => !posters[r.movieId]);
+
+    toFetch.forEach(async rec => {
+      try {
+        const res = await axios.get(`${API}/api/movie`, {
+          params: { title: rec.title }
+        });
+        if (res.data.posterUrl) {
+          setPosters(prev => ({ ...prev, [rec.movieId]: res.data.posterUrl }));
+          setLoadedPosters(prev => new Set([...prev, rec.movieId]));
+        } else {
+          setLoadedPosters(prev => new Set([...prev, rec.movieId]));
         }
-      });
-      setPosters(posterMap);
-    }
-    if (recommendations.length > 0) {
-      fetchPosters();
-    }
-  }, [recommendations.length]);
+      } catch {
+        setLoadedPosters(prev => new Set([...prev, rec.movieId]));
+      }
+    });
+  }, [recommendations.length, hiddenMovies.length]);
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.nav}>
-          <span style={styles.logo}>🎬 AI Movie Recommender</span>
+          <div style={styles.navLeft}>
+            <span style={styles.logo}>AI Movie Recommender</span>
+          </div>
           <div style={styles.navRight}>
             <button
               style={styles.navBtn}
               onClick={() => setShowHidden(!showHidden)}
             >
-              {showHidden ? "Back to recommendations" : `Hidden movies (${hiddenMovies.length})`}
+              {showHidden
+                ? "← Back to recommendations"
+                : `Hidden (${hiddenMovies.length})`}
             </button>
-            <span style={styles.username}>{user?.username}</span>
+            <div style={styles.userBadge}>{user?.username}</div>
           </div>
         </div>
 
-        {showHidden ? (
-          <div>
-            <h1 style={styles.title}>Hidden Movies</h1>
-            <p style={styles.subtitle}>
-              Unhide a movie to add it back to your recommendations.
-            </p>
-            {hiddenMovies.length === 0 ? (
-              <p style={styles.emptyState}>No hidden movies yet.</p>
-            ) : (
-              <div style={styles.grid}>
-                {hiddenMovies.map(rec => (
-                  <MovieTile
-                    key={rec.movieId}
-                    movie={{ ...rec, posterUrl: posters[rec.movieId] }}
-                    onClick={() => setSelectedMovie({ ...rec, posterUrl: posters[rec.movieId] })}
-                    onHide={() => unhideMovie(rec.movieId)}
-                    hideLabel="Unhide"
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+        <div style={styles.header}>
+          <h1 style={styles.title}>
+            {showHidden
+              ? "Hidden Movies"
+              : `Your picks, courtesy of ${characterLabel}`}
+          </h1>
+          <p style={styles.subtitle}>
+            {showHidden
+              ? "Unhide a movie to add it back to your list."
+              : "Click any title for details and where to stream."}
+          </p>
+        </div>
+
+        {displayMovies.length === 0 && showHidden ? (
+          <div style={styles.emptyState}>No hidden movies yet.</div>
         ) : (
-          <div>
-            <div style={styles.header}>
-              <h1 style={styles.title}>
-                Your picks, courtesy of {characterLabel}
-              </h1>
-              <p style={styles.subtitle}>
-                Click any title for details and where to stream.
-              </p>
-            </div>
-            <div style={styles.grid}>
-              {recommendations.map(rec => (
+          <div style={styles.grid}>
+            {displayMovies.map(rec => {
+              const posterLoaded = loadedPosters.has(rec.movieId);
+              if (!posterLoaded) {
+                return <MovieTileSkeleton key={rec.movieId} />;
+              }
+              return (
                 <MovieTile
                   key={rec.movieId}
                   movie={{ ...rec, posterUrl: posters[rec.movieId] }}
-                  onClick={() => setSelectedMovie({ ...rec, posterUrl: posters[rec.movieId] })}
-                  onHide={() => hideMovie(rec)}
-                  hideLabel="Hide"
+                  onClick={() => setSelectedMovie({
+                    ...rec,
+                    posterUrl: posters[rec.movieId]
+                  })}
+                  onHide={() => showHidden
+                    ? unhideMovie(rec.movieId)
+                    : hideMovie(rec)
+                  }
+                  hideLabel={showHidden ? "Unhide" : "Hide"}
                 />
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -125,7 +120,7 @@ export default function Recommendations() {
           movie={selectedMovie}
           onClose={() => setSelectedMovie(null)}
           onHide={() => {
-            hideMovie(selectedMovie);
+            if (!showHidden) hideMovie(selectedMovie);
             setSelectedMovie(null);
           }}
         />
@@ -137,22 +132,25 @@ export default function Recommendations() {
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: "32px 24px",
+    background: "#f7f6f2",
+    padding: "0 0 48px",
   },
   container: {
-    maxWidth: "1000px",
+    maxWidth: "1040px",
     margin: "0 auto",
+    padding: "0 40px",
   },
   nav: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "28px",
-    paddingBottom: "16px",
+    padding: "20px 0",
     borderBottom: "1px solid #e0dfd8",
+    marginBottom: "40px",
   },
+  navLeft: {},
   logo: {
-    fontSize: "15px",
+    fontSize: "14px",
     fontWeight: "500",
     color: "#1a1a1a",
   },
@@ -162,30 +160,34 @@ const styles = {
     gap: "16px",
   },
   navBtn: {
-    fontSize: "12px",
+    fontSize: "13px",
     color: "#888",
     background: "none",
     border: "1px solid #e0dfd8",
     borderRadius: "8px",
-    padding: "6px 12px",
+    padding: "7px 14px",
     cursor: "pointer",
   },
-  username: {
+  userBadge: {
     fontSize: "13px",
     color: "#aaa",
+    background: "#fff",
+    border: "1px solid #e0dfd8",
+    borderRadius: "8px",
+    padding: "7px 14px",
   },
   header: {
-    marginBottom: "24px",
+    marginBottom: "32px",
   },
   title: {
-    fontSize: "22px",
+    fontSize: "28px",
     fontWeight: "500",
     color: "#1a1a1a",
-    marginBottom: "6px",
+    marginBottom: "8px",
   },
   subtitle: {
-    fontSize: "13px",
-    color: "#aaa",
+    fontSize: "14px",
+    color: "#888",
   },
   grid: {
     display: "grid",

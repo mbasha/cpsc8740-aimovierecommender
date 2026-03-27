@@ -20,12 +20,12 @@ const CHARACTER_NAMES = {
 function InlineStarRating({ value, onChange }) {
   const [hovered, setHovered] = useState(0);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "2px", marginTop: "6px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "2px", marginTop: "8px" }}>
       {[1, 2, 3, 4, 5].map(star => (
         <button
           key={star}
           style={{
-            fontSize: "20px",
+            fontSize: "22px",
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -41,7 +41,9 @@ function InlineStarRating({ value, onChange }) {
         </button>
       ))}
       {value > 0 && (
-        <span style={{ fontSize: "11px", color: "#aaa", marginLeft: "4px" }}>{value} / 5</span>
+        <span style={{ fontSize: "12px", color: "#aaa", marginLeft: "6px" }}>
+          {value} / 5
+        </span>
       )}
     </div>
   );
@@ -98,9 +100,14 @@ export default function Checkin() {
   if (loading) {
     return (
       <div style={styles.page}>
-        <div style={styles.loadingCard}>
-          <div style={styles.emoji}>🎬</div>
-          <p style={styles.loadingText}>Updating your list...</p>
+        <div style={styles.container}>
+          <div style={{ marginBottom: "40px" }}>
+            <div className="skeleton" style={{ height: "32px", width: "300px", marginBottom: "16px", borderRadius: "6px" }} />
+            <div className="skeleton" style={{ height: "80px", width: "100%", borderRadius: "12px" }} />
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: "68px", borderRadius: "10px", marginBottom: "10px" }} />
+          ))}
         </div>
       </div>
     );
@@ -120,15 +127,11 @@ export default function Checkin() {
         <div style={styles.list}>
           {previousRecs.map(rec => (
             <div key={rec.movieId} style={styles.row}>
-              <div style={styles.posterThumb}>
-                {rec.posterUrl
-                  ? <img src={rec.posterUrl} alt={rec.title} style={styles.posterImg} />
-                  : <span style={{ fontSize: "18px" }}>🎬</span>
-                }
-              </div>
               <div style={styles.movieInfo}>
                 <div style={styles.movieTitle}>{rec.title}</div>
-                <div style={styles.movieGenres}>{rec.genres.replaceAll("|", " · ")}</div>
+                <div style={styles.movieGenres}>
+                  {rec.genres.replaceAll("|", " · ")}
+                </div>
                 {watched[String(rec.movieId)] === true && (
                   <InlineStarRating
                     value={watchedRatings[String(rec.movieId)] || 0}
@@ -140,7 +143,9 @@ export default function Checkin() {
                 <button
                   style={{
                     ...styles.btnWatched,
-                    ...(watched[String(rec.movieId)] === true ? styles.btnWatchedActive : {})
+                    ...(watched[String(rec.movieId)] === true
+                      ? styles.btnWatchedActive
+                      : {})
                   }}
                   onClick={() => toggleWatched(rec.movieId, true)}
                 >
@@ -149,7 +154,9 @@ export default function Checkin() {
                 <button
                   style={{
                     ...styles.btnNotYet,
-                    ...(watched[String(rec.movieId)] === false ? styles.btnNotYetActive : {})
+                    ...(watched[String(rec.movieId)] === false
+                      ? styles.btnNotYetActive
+                      : {})
                   }}
                   onClick={() => toggleWatched(rec.movieId, false)}
                 >
@@ -162,7 +169,7 @@ export default function Checkin() {
 
         <div style={styles.footer}>
           <button style={styles.btnSubmit} onClick={handleSubmit}>
-            Update my list
+            Update my list →
           </button>
           <button
             style={styles.btnSkip}
@@ -179,7 +186,8 @@ export default function Checkin() {
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: "48px 24px",
+    background: "#f7f6f2",
+    padding: "64px 40px",
     display: "flex",
     justifyContent: "center",
   },
@@ -188,27 +196,27 @@ const styles = {
     width: "100%",
   },
   header: {
-    marginBottom: "32px",
+    marginBottom: "36px",
   },
   title: {
-    fontSize: "24px",
+    fontSize: "28px",
     fontWeight: "500",
-    marginBottom: "16px",
+    marginBottom: "20px",
     color: "#1a1a1a",
   },
   bubble: {
-    background: "#f5f4ef",
+    background: "#fff",
     border: "1px solid #e0dfd8",
-    borderRadius: "12px",
-    padding: "16px 20px",
-    fontSize: "14px",
-    color: "#333",
-    lineHeight: "1.6",
+    borderRadius: "14px",
+    padding: "18px 22px",
+    fontSize: "15px",
+    color: "#444",
+    lineHeight: "1.7",
     fontStyle: "italic",
-    marginBottom: "6px",
+    marginBottom: "8px",
   },
   attribution: {
-    fontSize: "12px",
+    fontSize: "13px",
     color: "#aaa",
     paddingLeft: "4px",
   },
@@ -216,33 +224,16 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "10px",
-    marginBottom: "28px",
+    marginBottom: "32px",
   },
   row: {
     display: "flex",
-    gap: "14px",
+    gap: "16px",
     alignItems: "flex-start",
     background: "#fff",
     border: "1px solid #e0dfd8",
-    borderRadius: "10px",
-    padding: "12px 16px",
-  },
-  posterThumb: {
-    width: "44px",
-    height: "44px",
-    background: "#f0efea",
-    border: "1px solid #e0dfd8",
-    borderRadius: "6px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-    overflow: "hidden",
-  },
-  posterImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
+    borderRadius: "12px",
+    padding: "14px 18px",
   },
   movieInfo: {
     flex: 1,
@@ -251,7 +242,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: "500",
     color: "#1a1a1a",
-    marginBottom: "2px",
+    marginBottom: "3px",
   },
   movieGenres: {
     fontSize: "12px",
@@ -297,39 +288,22 @@ const styles = {
     alignItems: "center",
   },
   btnSubmit: {
-    padding: "11px 28px",
+    padding: "12px 28px",
     fontSize: "14px",
     background: "#1a1a1a",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "10px",
     fontWeight: "500",
     cursor: "pointer",
   },
   btnSkip: {
-    padding: "11px 20px",
+    padding: "12px 20px",
     fontSize: "13px",
     background: "#fff",
     color: "#888",
     border: "1px solid #e0dfd8",
-    borderRadius: "8px",
+    borderRadius: "10px",
     cursor: "pointer",
-  },
-  loadingCard: {
-    background: "#fff",
-    border: "1px solid #e0dfd8",
-    borderRadius: "16px",
-    padding: "48px 40px",
-    textAlign: "center",
-    maxWidth: "420px",
-    margin: "100px auto",
-  },
-  emoji: {
-    fontSize: "48px",
-    marginBottom: "16px",
-  },
-  loadingText: {
-    fontSize: "15px",
-    color: "#555",
   },
 };

@@ -4,9 +4,6 @@ export default function MovieTile({ movie, onClick, onHide, hideLabel = "Hide" }
     .slice(0, 2)
     .join(" · ");
 
-  // Convert estimatedRating (0.5-5.0) to a display star rating
-  const starDisplay = movie.estimatedRating.toFixed(1);
-
   function handleHide(e) {
     e.stopPropagation();
     onHide();
@@ -46,8 +43,8 @@ export default function MovieTile({ movie, onClick, onHide, hideLabel = "Hide" }
         <div style={styles.title}>{movie.title}</div>
         <div style={styles.genres}>{genres}</div>
         <div style={styles.scoreRow}>
-          <span style={styles.starRating}>★ {starDisplay}</span>
-          <span style={styles.matchScore}>Match: {movie.estimatedRating.toFixed(2)}</span>
+          <span style={styles.starRating}>★ {movie.estimatedRating.toFixed(1)}</span>
+          <span style={styles.matchScore}>{movie.estimatedRating.toFixed(2)} match</span>
         </div>
       </div>
 
@@ -114,7 +111,7 @@ const styles = {
     fontWeight: "500",
   },
   info: {
-    padding: "10px 10px 4px",
+    padding: "10px 10px 6px",
     flex: 1,
   },
   title: {
@@ -142,6 +139,7 @@ const styles = {
   starRating: {
     fontSize: "11px",
     color: "#555",
+    fontWeight: "500",
   },
   matchScore: {
     fontSize: "11px",
@@ -149,7 +147,7 @@ const styles = {
   },
   hideBtn: {
     width: "100%",
-    padding: "6px",
+    padding: "7px",
     fontSize: "11px",
     background: "none",
     color: "#aaa",

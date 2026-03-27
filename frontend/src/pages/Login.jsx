@@ -20,7 +20,6 @@ export default function Login() {
     try {
       const res = await axios.post(`${API}/api/login`, { username: username.trim() });
       setUser(res.data);
-      // Don't pre-populate recommendations — let App.jsx routing handle it
     } catch (e) {
       setError("Something went wrong. Is the server running?");
     } finally {
@@ -34,32 +33,67 @@ export default function Login() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.logo}>🎬</div>
-        <h1 style={styles.title}>AI Movie Recommender</h1>
-        <p style={styles.subtitle}>
-          Pick an employee. Rate some movies. Get recommendations.
-        </p>
-        <div style={styles.inputRow}>
-          <input
-            style={styles.input}
-            type="text"
-            placeholder="Enter your username"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-          />
+      <div style={styles.left}>
+        <div style={styles.leftContent}>
+          <div style={styles.eyebrow}>AI Movie Recommender</div>
+          <h1 style={styles.headline}>
+            Your next favorite<br />movie is one<br />conversation away.
+          </h1>
+          <p style={styles.description}>
+            Pick a character. Rate a few films. Get a personalized list of
+            movies you'll actually want to watch — with links to where you
+            can stream them tonight.
+          </p>
+          <div style={styles.features}>
+            <div style={styles.feature}>
+              <span style={styles.featureIcon}>🎬</span>
+              <span>Powered by collaborative filtering AI</span>
+            </div>
+            <div style={styles.feature}>
+              <span style={styles.featureIcon}>📺</span>
+              <span>Real-time streaming availability</span>
+            </div>
+            <div style={styles.feature}>
+              <span style={styles.featureIcon}>🎭</span>
+              <span>Three unique recommendation personalities</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={styles.right}>
+        <div style={styles.loginCard}>
+          <h2 style={styles.cardTitle}>Let's get started</h2>
+          <p style={styles.cardSubtitle}>
+            No account needed. Just pick a username and we'll remember your taste for next time.
+          </p>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Your username</label>
+            <input
+              style={styles.input}
+              type="text"
+              placeholder="e.g. moviebuff42"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+          </div>
+          {error && <p style={styles.error}>{error}</p>}
           <button
-            style={styles.btn}
+            style={{
+              ...styles.btn,
+              opacity: loading ? 0.7 : 1,
+            }}
             onClick={handleLogin}
             disabled={loading}
           >
-            {loading ? "..." : "Let's go"}
+            {loading ? "Checking in..." : "Get my recommendations →"}
           </button>
+          <p style={styles.hint}>
+            Returning user? Enter the same username to pick up where you left off.
+          </p>
         </div>
-        {error && <p style={styles.error}>{error}</p>}
-        <p style={styles.hint}>No password needed. Just pick a username and go.</p>
       </div>
     </div>
   );
@@ -68,67 +102,122 @@ export default function Login() {
 const styles = {
   page: {
     minHeight: "100vh",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+  },
+  left: {
+    background: "#1a1a1a",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "24px",
+    padding: "64px 56px",
   },
-  card: {
-    background: "#fff",
-    border: "1px solid #e0dfd8",
-    borderRadius: "16px",
-    padding: "48px 40px",
-    width: "100%",
-    maxWidth: "420px",
-    textAlign: "center",
+  leftContent: {
+    maxWidth: "440px",
   },
-  logo: {
-    fontSize: "48px",
-    marginBottom: "16px",
-  },
-  title: {
-    fontSize: "24px",
+  eyebrow: {
+    fontSize: "12px",
     fontWeight: "500",
-    marginBottom: "8px",
-    color: "#1a1a1a",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: "0.1em",
+    marginBottom: "24px",
   },
-  subtitle: {
+  headline: {
+    fontSize: "44px",
+    fontWeight: "500",
+    color: "#fff",
+    lineHeight: "1.15",
+    marginBottom: "24px",
+  },
+  description: {
+    fontSize: "15px",
+    color: "#999",
+    lineHeight: "1.7",
+    marginBottom: "40px",
+  },
+  features: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+  },
+  feature: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    fontSize: "14px",
+    color: "#bbb",
+  },
+  featureIcon: {
+    fontSize: "18px",
+    width: "28px",
+    flexShrink: 0,
+  },
+  right: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "64px 56px",
+    background: "#f7f6f2",
+  },
+  loginCard: {
+    width: "100%",
+    maxWidth: "400px",
+  },
+  cardTitle: {
+    fontSize: "28px",
+    fontWeight: "500",
+    color: "#1a1a1a",
+    marginBottom: "10px",
+  },
+  cardSubtitle: {
     fontSize: "14px",
     color: "#888",
-    marginBottom: "32px",
     lineHeight: "1.6",
+    marginBottom: "36px",
   },
-  inputRow: {
-    display: "flex",
-    gap: "8px",
-    marginBottom: "12px",
+  inputGroup: {
+    marginBottom: "16px",
+  },
+  label: {
+    display: "block",
+    fontSize: "13px",
+    fontWeight: "500",
+    color: "#555",
+    marginBottom: "8px",
   },
   input: {
-    flex: 1,
-    padding: "10px 14px",
-    fontSize: "14px",
+    width: "100%",
+    padding: "12px 16px",
+    fontSize: "15px",
     border: "1px solid #e0dfd8",
-    borderRadius: "8px",
+    borderRadius: "10px",
     outline: "none",
     fontFamily: "inherit",
-  },
-  btn: {
-    padding: "10px 20px",
-    fontSize: "14px",
-    background: "#1a1a1a",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontWeight: "500",
+    background: "#fff",
+    color: "#1a1a1a",
   },
   error: {
     fontSize: "13px",
     color: "#c0392b",
-    marginBottom: "8px",
+    marginBottom: "12px",
+  },
+  btn: {
+    width: "100%",
+    padding: "13px 20px",
+    fontSize: "15px",
+    background: "#1a1a1a",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    fontWeight: "500",
+    marginBottom: "16px",
+    transition: "opacity 0.15s ease",
   },
   hint: {
     fontSize: "12px",
     color: "#bbb",
-    marginTop: "8px",
+    textAlign: "center",
+    lineHeight: "1.5",
   },
 };

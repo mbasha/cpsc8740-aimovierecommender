@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useApp } from "../context/AppContext";
 import StarRating from "../components/StarRating";
@@ -18,23 +18,22 @@ const SEED_MOVIES = [
 
 const CHARACTER_MOVIES = {
   randy: [
-    { movieId: 26587, title: "Scream",                       year: 1996, genres: "Horror · Mystery" },
-    { movieId: 8467,  title: "A Nightmare on Elm Street",    year: 1984, genres: "Horror" },
+    { movieId: 26587, title: "Scream",                    year: 1996, genres: "Horror · Mystery" },
+    { movieId: 8467,  title: "A Nightmare on Elm Street", year: 1984, genres: "Horror" },
   ],
   valets: [
-    { movieId: 1029,  title: "Coming to America",            year: 1988, genres: "Comedy · Romance" },
-    { movieId: 11482, title: "Taken",                        year: 2008, genres: "Action · Thriller" },
+    { movieId: 1029,  title: "Coming to America",         year: 1988, genres: "Comedy · Romance" },
+    { movieId: 11482, title: "Taken",                     year: 2008, genres: "Action · Thriller" },
   ],
   abed: [
-    { movieId: 2108,  title: "The Breakfast Club",           year: 1985, genres: "Comedy · Drama" },
-    { movieId: 1893,  title: "Raiders of the Lost Ark",      year: 1981, genres: "Action · Adventure" },
+    { movieId: 2108,  title: "The Breakfast Club",        year: 1985, genres: "Comedy · Drama" },
+    { movieId: 1893,  title: "Raiders of the Lost Ark",   year: 1981, genres: "Action · Adventure" },
   ],
 };
 
 const SCRIPTS = {
   randy: {
     intro: "Okay, okay, OKAY. Listen up because I am only going to say this once. If you want good recommendations, you have to play by the rules. And rule number one? You have to be honest about what you've seen. No lying. The movie gods will know. I'm Randy by the way. Let's see what we're working with.",
-    prompt: "Alright, be brutally honest. How do you rate this one?",
     movies: {
       "The Shawshank Redemption": "Classic redemption arc. No jump scares, I know, but even I respect a perfect film. What did you think?",
       "The Dark Knight": "Heath Ledger's Joker is the greatest movie villain since Hannibal Lecter. Fight me. Where does this land for you?",
@@ -47,11 +46,10 @@ const SCRIPTS = {
       "Scream": "Oh you KNOW I have opinions about this one. This is basically my bible. But forget what I think — what do YOU think?",
       "A Nightmare on Elm Street": "Freddy Krueger. The man of my dreams. Literally. This is where it all started for me. Be honest.",
     },
-    outro: "Okay. Okay okay okay. I've seen enough. Based on your taste — or lack thereof, no offense — here's what I think you need to watch next. Don't blame me if any of these change your life.",
+    outro: "Okay. Okay okay okay. I've seen enough. Based on your taste — or lack thereof, no offense — here's what I think you need to watch next.",
   },
   valets: {
     intro: "YOOOOO. Okay so check it out. My boy and I — we know MOVIES. Like we're talking encyclopedic knowledge of cinema right here. You want recommendations? We got you. We just need to know what you're working with first. Let's run through some films real quick. LET'S GO.",
-    prompt: "Okay okay okay — where does this one land for you?",
     movies: {
       "The Shawshank Redemption": [
         { valet: "V1", line: "Yo this movie is COLD BLOODED." },
@@ -117,90 +115,106 @@ const SCRIPTS = {
   },
   abed: {
     intro: "Cool. Cool cool cool. So here's what's happening. You want movie recommendations, and I have a system. I'm going to show you ten films. You rate them. I analyze the data, identify your tropes, and generate a watchlist optimized for your specific character type. It's actually a pretty elegant process when you think about it. I'm Abed. Let's begin.",
-    prompt: "Rate this one. Be precise — half stars matter.",
     movies: {
-      "The Shawshank Redemption": "Structurally this is a near-perfect film. The hope theme is delivered with surgical consistency from the first act through the resolution. It's the kind of movie that makes people believe in narrative again. Where does it land for you?",
+      "The Shawshank Redemption": "Structurally this is a near-perfect film. The hope theme is delivered with surgical consistency from the first act through the resolution. Where does it land for you?",
       "The Dark Knight": "Nolan essentially deconstructed the superhero genre and rebuilt it as a Greek tragedy. The Joker functions as a chaos agent — a classic archetype used to reveal the protagonist's true nature. What do you rate it?",
       "Jurassic Park": "Spielberg's use of practical effects combined with early CGI created a visual language that the industry still references. Also the T-Rex reveal is a masterclass in building tension through sound design. Your rating?",
-      "Pulp Fiction": "Non-linear storytelling as a narrative device. Tarantino essentially gave the audience credit for being able to hold multiple timelines simultaneously. It changed what studios thought viewers could handle. What do you give it?",
+      "Pulp Fiction": "Non-linear storytelling as a narrative device. Tarantino essentially gave the audience credit for being able to hold multiple timelines simultaneously. What do you give it?",
       "Toy Story": "Pixar established an entire emotional grammar with this film. The premise is a metaphor for every character who performs one identity while experiencing another. I find it very relatable. Your rating?",
       "The Silence of the Lambs": "Clarice and Hannibal have one of the most precisely written mentor-protégé dynamics in cinema. The power exchange in every scene is deliberate and layered. Rate it.",
-      "Forrest Gump": "It's a picaresque narrative — a simple protagonist moving through complex historical events without fully understanding them. Some people find that profound. Others find it frustrating. I'm curious which camp you're in. Rate it.",
+      "Forrest Gump": "It's a picaresque narrative — a simple protagonist moving through complex historical events without fully understanding them. Some people find that profound. Others find it frustrating. Rate it.",
       "Goodfellas": "Scorsese's use of voiceover narration creates dramatic irony throughout — we know Henry is doomed before he does. It's technically brilliant. What's your rating?",
-      "The Breakfast Club": "Five character archetypes locked in a room together for one day. The Brain, the Athlete, the Basket Case, the Princess, the Criminal. It's almost clinical in its construction, which is probably why I've seen it eleven times. Your rating?",
-      "Raiders of the Lost Ark": "The introduction of Indiana Jones in the first three minutes is one of the most efficient pieces of character establishment in film history. You learn everything about him before he says a word. I've broken it down frame by frame. What do you rate it?",
+      "The Breakfast Club": "Five character archetypes locked in a room together for one day. It's almost clinical in its construction, which is probably why I've seen it eleven times. Your rating?",
+      "Raiders of the Lost Ark": "The introduction of Indiana Jones in the first three minutes is one of the most efficient pieces of character establishment in film history. What do you rate it?",
     },
     outro: "Okay. I've identified your pattern. These are the ten films most aligned with your specific viewer profile. I'm fairly confident about this.",
   },
 };
 
 function getDialog(character, movieTitle) {
-  const script = SCRIPTS[character.id];
-  return script?.movies?.[movieTitle] || script?.prompt || "";
+  return SCRIPTS[character.id]?.movies?.[movieTitle] || "";
 }
 
-function RandyDialog({ text }) {
-  return (
-    <div style={styles.bubble}>{text}</div>
-  );
-}
-
-function ValetsDialog({ lines }) {
-  if (typeof lines === "string") {
-    return <div style={styles.bubble}>{lines}</div>;
+function Dialog({ character, text }) {
+  if (character.id === "valets" && Array.isArray(text)) {
+    return (
+      <div style={styles.chat}>
+        {text.map((msg, i) => (
+          <div key={i} style={{
+            ...styles.msgRow,
+            flexDirection: msg.valet === "V2" ? "row-reverse" : "row"
+          }}>
+            <div style={styles.avatar}>{msg.valet}</div>
+            <div style={{
+              ...styles.bubble,
+              marginLeft: msg.valet === "V2" ? "auto" : 0,
+              marginRight: msg.valet === "V1" ? "auto" : 0,
+              maxWidth: "78%",
+            }}>{msg.line}</div>
+          </div>
+        ))}
+      </div>
+    );
   }
-  return (
-    <div style={styles.chat}>
-      {lines.map((msg, i) => (
-        <div key={i} style={{
-          ...styles.msgRow,
-          flexDirection: msg.valet === "V2" ? "row-reverse" : "row"
-        }}>
-          <div style={styles.avatar}>{msg.valet}</div>
-          <div style={{
-            ...styles.bubble,
-            marginLeft: msg.valet === "V2" ? "auto" : 0,
-            marginRight: msg.valet === "V1" ? "auto" : 0,
-            maxWidth: "75%",
-          }}>{msg.line}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function AbedDialog({ text }) {
-  return (
-    <div style={styles.bubble}>{text}</div>
-  );
+  return <div style={styles.bubble}>{text}</div>;
 }
 
 export default function RatingFlow() {
-  const { user, character, setRecommendations } = useApp();
+  const { user, character, setCharacter, setRecommendations } = useApp();
   const [step, setStep] = useState("intro");
   const [movieIndex, setMovieIndex] = useState(0);
   const [ratings, setRatings] = useState({});
   const [currentRating, setCurrentRating] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [posters, setPosters] = useState({});
+  const [postersLoading, setPostersLoading] = useState(true);
 
-  const allMovies = [...SEED_MOVIES, ...( CHARACTER_MOVIES[character.id] || [])];
+  const allMovies = [...SEED_MOVIES, ...(CHARACTER_MOVIES[character.id] || [])];
   const currentMovie = allMovies[movieIndex];
   const totalMovies = allMovies.length;
   const dialog = currentMovie ? getDialog(character, currentMovie.title) : "";
+  const progress = Math.round((movieIndex / totalMovies) * 100);
+
+  // Fetch all posters upfront
+  useEffect(() => {
+    async function fetchPosters() {
+      setPostersLoading(true);
+      const results = await Promise.allSettled(
+        allMovies.map(async movie => {
+          try {
+            const res = await axios.get(`${API}/api/movie`, {
+              params: { title: `${movie.title} (${movie.year})` }
+            });
+            return { movieId: movie.movieId, posterUrl: res.data.posterUrl };
+          } catch {
+            return { movieId: movie.movieId, posterUrl: null };
+          }
+        })
+      );
+      const map = {};
+      results.forEach(r => {
+        if (r.status === "fulfilled" && r.value.posterUrl) {
+          map[r.value.movieId] = r.value.posterUrl;
+        }
+      });
+      setPosters(map);
+      setPostersLoading(false);
+    }
+    fetchPosters();
+  }, []);
 
   function handleNext() {
-    if (currentRating > 0) {
-      setRatings(prev => ({
-        ...prev,
-        [String(currentMovie.movieId)]: currentRating
-      }));
-    }
+    const updatedRatings = currentRating > 0
+      ? { ...ratings, [String(currentMovie.movieId)]: currentRating }
+      : ratings;
+
+    setRatings(updatedRatings);
     setCurrentRating(0);
 
     if (movieIndex < totalMovies - 1) {
       setMovieIndex(i => i + 1);
     } else {
-      handleSubmit({ ...ratings, [String(currentMovie.movieId)]: currentRating });
+      handleSubmit(updatedRatings);
     }
   }
 
@@ -229,16 +243,27 @@ export default function RatingFlow() {
     }
   }
 
+  // Skeleton grid while loading recommendations
   if (loading) {
     return (
       <div style={styles.page}>
-        <div style={styles.loadingCard}>
-          <div style={styles.loadingEmoji}>🎬</div>
-          <p style={styles.loadingText}>
-            {character.id === "randy" && "Okay. Okay okay okay. Calculating..."}
-            {character.id === "valets" && "YOOO hold on we're working on it..."}
-            {character.id === "abed" && "Processing. This will take approximately eight seconds."}
-          </p>
+        <div style={styles.loadingPage}>
+          <div style={styles.loadingHeader}>
+            <div className="skeleton" style={{ height: "18px", width: "200px", marginBottom: "12px" }} />
+            <div className="skeleton" style={{ height: "32px", width: "340px", marginBottom: "8px" }} />
+            <div className="skeleton" style={{ height: "16px", width: "260px" }} />
+          </div>
+          <div style={styles.skeletonGrid}>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} style={styles.skeletonTile}>
+                <div className="skeleton" style={{ width: "100%", paddingTop: "150%", borderRadius: "8px" }} />
+                <div style={{ padding: "10px" }}>
+                  <div className="skeleton" style={{ height: "12px", width: "80%", marginBottom: "6px" }} />
+                  <div className="skeleton" style={{ height: "10px", width: "60%" }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -247,17 +272,37 @@ export default function RatingFlow() {
   if (step === "intro") {
     return (
       <div style={styles.page}>
-        <div style={styles.introCard}>
-          <div style={styles.characterEmoji}>
-            {character.id === "randy" && "🎬"}
-            {character.id === "valets" && "🎭"}
-            {character.id === "abed" && "📽️"}
+        <div style={styles.introLayout}>
+          <div style={styles.introLeft}>
+            <div style={styles.characterBadge}>{character.source}</div>
+            <h1 style={styles.introName}>{character.name}</h1>
+            <div style={styles.introBubble}>
+              {SCRIPTS[character.id].intro}
+            </div>
+            <div style={styles.introActions}>
+              <button style={styles.btnPrimary} onClick={() => setStep("rating")}>
+                Let's do it →
+              </button>
+              <button style={styles.btnGhost} onClick={() => setCharacter(null)}>
+                ← Choose someone else
+              </button>
+            </div>
           </div>
-          <h2 style={styles.characterName}>{character.name}</h2>
-          <div style={styles.bubble}>{SCRIPTS[character.id].intro}</div>
-          <button style={styles.btn} onClick={() => setStep("rating")}>
-            let's do it
-          </button>
+          <div style={styles.introRight}>
+            <div style={styles.introMovieCount}>
+              <div style={styles.introCountNumber}>{totalMovies}</div>
+              <div style={styles.introCountLabel}>movies to rate</div>
+            </div>
+            <div style={styles.introMovieList}>
+              {allMovies.map((m, i) => (
+                <div key={m.movieId} style={styles.introMovieItem}>
+                  <span style={styles.introMovieNum}>{i + 1}</span>
+                  <span style={styles.introMovieTitle}>{m.title}</span>
+                  <span style={styles.introMovieYear}>{m.year}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -265,41 +310,52 @@ export default function RatingFlow() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.ratingCard}>
-        <div style={styles.progressBar}>
-          <div style={{
-            ...styles.progressFill,
-            width: `${((movieIndex) / totalMovies) * 100}%`
-          }} />
-        </div>
-        <div style={styles.progressLabel}>
-          {movieIndex + 1} of {totalMovies}
-        </div>
-        <div style={styles.movieRow}>
-          <div style={styles.posterPlaceholder}>
-            <span style={styles.posterText}>🎬</span>
+      <div style={styles.ratingLayout}>
+        {/* Left — Poster */}
+        <div style={styles.posterCol}>
+          {postersLoading || !posters[currentMovie.movieId] ? (
+            <div className={postersLoading ? "skeleton" : ""} style={styles.posterBox}>
+              {!postersLoading && (
+                <div style={styles.posterFallback}>{currentMovie.title}</div>
+              )}
+            </div>
+          ) : (
+            <img
+              src={posters[currentMovie.movieId]}
+              alt={currentMovie.title}
+              style={styles.posterImage}
+            />
+          )}
+          <div style={styles.progressSection}>
+            <div style={styles.progressBar}>
+              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+            </div>
+            <div style={styles.progressLabel}>
+              {movieIndex + 1} of {totalMovies}
+            </div>
           </div>
-          <div style={styles.movieContent}>
-            <div style={styles.movieTitle}>{currentMovie.title}</div>
-            <div style={styles.movieMeta}>
-              {currentMovie.year} &nbsp;·&nbsp; {currentMovie.genres}
-            </div>
-            {character.id === "valets" ? (
-              <ValetsDialog lines={dialog} />
-            ) : character.id === "abed" ? (
-              <AbedDialog text={dialog} />
-            ) : (
-              <RandyDialog text={dialog} />
-            )}
+        </div>
+
+        {/* Right — Dialog and rating */}
+        <div style={styles.dialogCol}>
+          <button style={styles.backBtn} onClick={() => setCharacter(null)}>
+            ← Choose someone else
+          </button>
+          <div style={styles.movieTitle}>{currentMovie.title}</div>
+          <div style={styles.movieMeta}>
+            {currentMovie.year} &nbsp;·&nbsp; {currentMovie.genres}
+          </div>
+          <Dialog character={character} text={dialog} />
+          <div style={styles.ratingSection}>
             <StarRating value={currentRating} onChange={setCurrentRating} />
-            <div style={styles.btnRow}>
-              <button style={styles.btn} onClick={handleNext}>
-                {movieIndex < totalMovies - 1 ? "next" : "get my recommendations"}
-              </button>
-              <button style={styles.btnSecondary} onClick={handleSkip}>
-                haven't seen it
-              </button>
-            </div>
+          </div>
+          <div style={styles.actionRow}>
+            <button style={styles.btnPrimary} onClick={handleNext}>
+              {movieIndex < totalMovies - 1 ? "Next →" : "Get my recommendations →"}
+            </button>
+            <button style={styles.btnGhost} onClick={handleSkip}>
+              Haven't seen it
+            </button>
           </div>
         </div>
       </div>
@@ -310,113 +366,212 @@ export default function RatingFlow() {
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: "48px 24px",
+    background: "#f7f6f2",
+  },
+  introLayout: {
+    minHeight: "100vh",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+  },
+  introLeft: {
+    background: "#1a1a1a",
+    padding: "64px 56px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+  },
+  introRight: {
+    padding: "64px 56px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: "32px",
+  },
+  characterBadge: {
+    display: "inline-block",
+    fontSize: "11px",
+    fontWeight: "500",
+    color: "#888",
+    textTransform: "uppercase",
+    letterSpacing: "0.1em",
+    marginBottom: "16px",
+  },
+  introName: {
+    fontSize: "40px",
+    fontWeight: "500",
+    color: "#fff",
+    marginBottom: "28px",
+    lineHeight: "1.15",
+  },
+  introBubble: {
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "14px",
+    padding: "20px 24px",
+    fontSize: "15px",
+    color: "#ccc",
+    lineHeight: "1.7",
+    marginBottom: "36px",
+    fontStyle: "italic",
+  },
+  introActions: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    alignItems: "flex-start",
+  },
+  introMovieCount: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: "10px",
+  },
+  introCountNumber: {
+    fontSize: "56px",
+    fontWeight: "300",
+    color: "#1a1a1a",
+    lineHeight: 1,
+  },
+  introCountLabel: {
+    fontSize: "16px",
+    color: "#888",
+  },
+  introMovieList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  introMovieItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "10px 14px",
+    background: "#fff",
+    border: "1px solid #e0dfd8",
+    borderRadius: "8px",
+  },
+  introMovieNum: {
+    fontSize: "11px",
+    color: "#aaa",
+    width: "18px",
+    flexShrink: 0,
+  },
+  introMovieTitle: {
+    fontSize: "13px",
+    color: "#1a1a1a",
+    flex: 1,
+  },
+  introMovieYear: {
+    fontSize: "12px",
+    color: "#aaa",
+  },
+  ratingLayout: {
+    minHeight: "100vh",
+    display: "grid",
+    gridTemplateColumns: "420px 1fr",
+  },
+  posterCol: {
+    background: "#1a1a1a",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "48px 40px",
+    gap: "28px",
+  },
+  posterBox: {
+    width: "100%",
+    maxWidth: "280px",
+    aspectRatio: "2/3",
+    borderRadius: "12px",
+    background: "#2a2a2a",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
-  introCard: {
-    background: "#fff",
-    border: "1px solid #e0dfd8",
-    borderRadius: "16px",
-    padding: "40px",
-    maxWidth: "560px",
-    width: "100%",
+  posterFallback: {
+    fontSize: "14px",
+    color: "#555",
     textAlign: "center",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    alignItems: "center",
+    padding: "20px",
+    lineHeight: "1.5",
   },
-  characterEmoji: {
-    fontSize: "48px",
-  },
-  characterName: {
-    fontSize: "20px",
-    fontWeight: "500",
-  },
-  ratingCard: {
-    background: "#fff",
-    border: "1px solid #e0dfd8",
-    borderRadius: "16px",
-    padding: "32px",
-    maxWidth: "680px",
+  posterImage: {
     width: "100%",
+    maxWidth: "280px",
+    aspectRatio: "2/3",
+    objectFit: "cover",
+    borderRadius: "12px",
+  },
+  progressSection: {
+    width: "100%",
+    maxWidth: "280px",
   },
   progressBar: {
-    height: "4px",
-    background: "#f0efea",
+    height: "3px",
+    background: "#333",
     borderRadius: "2px",
     marginBottom: "8px",
   },
   progressFill: {
-    height: "4px",
-    background: "#1a1a1a",
+    height: "3px",
+    background: "#fff",
     borderRadius: "2px",
-    transition: "width 0.3s ease",
+    transition: "width 0.4s ease",
   },
   progressLabel: {
     fontSize: "12px",
-    color: "#aaa",
-    textAlign: "right",
-    marginBottom: "24px",
+    color: "#666",
+    textAlign: "center",
   },
-  movieRow: {
-    display: "flex",
-    gap: "24px",
-    alignItems: "flex-start",
-  },
-  posterPlaceholder: {
-    width: "110px",
-    height: "160px",
-    background: "#f0efea",
-    border: "1px dashed #ccc",
-    borderRadius: "8px",
-    flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  posterText: {
-    fontSize: "32px",
-  },
-  movieContent: {
-    flex: 1,
+  dialogCol: {
+    padding: "64px 56px",
     display: "flex",
     flexDirection: "column",
-    gap: "10px",
+    justifyContent: "center",
+    gap: "16px",
+  },
+  backBtn: {
+    alignSelf: "flex-start",
+    fontSize: "13px",
+    color: "#aaa",
+    background: "none",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
+    marginBottom: "8px",
   },
   movieTitle: {
-    fontSize: "20px",
+    fontSize: "32px",
     fontWeight: "500",
     color: "#1a1a1a",
+    lineHeight: "1.2",
   },
   movieMeta: {
-    fontSize: "13px",
+    fontSize: "14px",
     color: "#aaa",
   },
   bubble: {
-    background: "#f5f4ef",
+    background: "#fff",
     border: "1px solid #e0dfd8",
-    borderRadius: "12px",
-    padding: "14px 16px",
-    fontSize: "13px",
+    borderRadius: "14px",
+    padding: "18px 22px",
+    fontSize: "15px",
     color: "#333",
-    lineHeight: "1.6",
+    lineHeight: "1.7",
   },
   chat: {
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "10px",
   },
   msgRow: {
     display: "flex",
-    gap: "8px",
+    gap: "10px",
     alignItems: "flex-end",
   },
   avatar: {
-    width: "28px",
-    height: "28px",
+    width: "30px",
+    height: "30px",
     borderRadius: "50%",
     background: "#e0dfd8",
     border: "1px solid #ccc",
@@ -428,44 +583,51 @@ const styles = {
     fontWeight: "500",
     color: "#666",
   },
-  btnRow: {
-    display: "flex",
-    gap: "10px",
-    marginTop: "4px",
+  ratingSection: {
+    padding: "8px 0",
   },
-  btn: {
-    padding: "10px 20px",
-    fontSize: "13px",
+  actionRow: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "center",
+    marginTop: "8px",
+  },
+  btnPrimary: {
+    padding: "12px 24px",
+    fontSize: "14px",
     background: "#1a1a1a",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: "10px",
     fontWeight: "500",
+    cursor: "pointer",
   },
-  btnSecondary: {
-    padding: "10px 20px",
-    fontSize: "13px",
-    background: "#fff",
-    color: "#555",
+  btnGhost: {
+    padding: "12px 20px",
+    fontSize: "14px",
+    background: "none",
+    color: "#888",
     border: "1px solid #e0dfd8",
-    borderRadius: "8px",
+    borderRadius: "10px",
+    cursor: "pointer",
   },
-  loadingCard: {
+  loadingPage: {
+    maxWidth: "1040px",
+    margin: "0 auto",
+    padding: "64px 40px",
+  },
+  loadingHeader: {
+    marginBottom: "40px",
+  },
+  skeletonGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gap: "16px",
+  },
+  skeletonTile: {
     background: "#fff",
     border: "1px solid #e0dfd8",
-    borderRadius: "16px",
-    padding: "48px 40px",
-    textAlign: "center",
-    maxWidth: "420px",
-    width: "100%",
-  },
-  loadingEmoji: {
-    fontSize: "48px",
-    marginBottom: "16px",
-  },
-  loadingText: {
-    fontSize: "15px",
-    color: "#555",
-    fontStyle: "italic",
+    borderRadius: "10px",
+    overflow: "hidden",
   },
 };
