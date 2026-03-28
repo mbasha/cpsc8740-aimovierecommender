@@ -3,12 +3,72 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
 
+function ModalStarRating({ onRate }) {
+  const [hovered, setHovered] = useState(0);
+  const [selected, setSelected] = useState(0);
+
+  function handleRate(star) {
+    setSelected(star);
+    onRate(star);
+  }
+
+  return (
+    <div style={starStyles.row}>
+      <span style={starStyles.label}>Rate:</span>
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          style={{
+            ...starStyles.star,
+            color: star <= (hovered || selected) ? "var(--tsr-yellow)" : "var(--tsr-border)",
+          }}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => handleRate(star)}
+        >
+          ★
+        </button>
+      ))}
+      {selected > 0 && <span style={starStyles.done}>✓</span>}
+    </div>
+  );
+}
+
+const starStyles = {
+  row: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  },
+  label: {
+    fontSize: "13px",
+    color: "var(--tsr-text-muted)",
+    marginRight: "4px",
+  },
+  star: {
+    fontSize: "22px",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "1px",
+    lineHeight: 1,
+    transition: "color 0.1s",
+    fontFamily: "inherit",
+  },
+  done: {
+    fontSize: "14px",
+    color: "var(--tsr-teal)",
+    marginLeft: "4px",
+  },
+};
+
 export default function MovieModal({
   movie,
   onClose,
   onHide,
   onAddToWatchlist,
   isInWatchlist,
+  onRate,
 }) {
   const [details, setDetails] = useState(movie.tmdbData || null);
   const [loading, setLoading] = useState(!movie.tmdbData);
@@ -63,14 +123,10 @@ export default function MovieModal({
               ) : (
                 <>
                   {details?.releaseDate && (
-                    <span style={styles.metaItem}>
-                      {details.releaseDate.split("-")[0]}
-                    </span>
+                    <span style={styles.metaItem}>{details.releaseDate.split("-")[0]}</span>
                   )}
                   {details?.rating > 0 && (
-                    <span style={styles.metaItem}>
-                      ★ {Number(details.rating).toFixed(1)} community
-                    </span>
+                    <span style={styles.metaItem}>★ {Number(details.rating).toFixed(1)} community</span>
                   )}
                   {movie.estimatedRating && (
                     <span style={{ ...styles.metaItem, ...styles.metaItemAccent }}>
@@ -84,15 +140,12 @@ export default function MovieModal({
 
             {loading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <div className="skeleton" style={{ height: "14px", width: "100%", borderRadius: "4px" }} />
-                <div className="skeleton" style={{ height: "14px", width: "95%", borderRadius: "4px" }} />
-                <div className="skeleton" style={{ height: "14px", width: "85%", borderRadius: "4px" }} />
-                <div className="skeleton" style={{ height: "14px", width: "70%", borderRadius: "4px" }} />
+                {[100, 95, 88, 72].map((w, i) => (
+                  <div key={i} className="skeleton" style={{ height: "14px", width: `${w}%`, borderRadius: "4px" }} />
+                ))}
               </div>
             ) : (
-              details?.overview && (
-                <p style={styles.overview}>{details.overview}</p>
-              )
+              details?.overview && <p style={styles.overview}>{details.overview}</p>
             )}
 
             {loading ? (
@@ -108,22 +161,14 @@ export default function MovieModal({
                 <div style={styles.streamLabel}>Where to watch</div>
                 <div style={styles.streamPills}>
                   {details.streaming.map(s => (
-                    <a
-                      key={s.name}
-                      href={s.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={styles.pill}
-                    >
+                    <a key={s.name} href={s.link} target="_blank" rel="noreferrer" style={styles.pill}>
                       {s.name}
                     </a>
                   ))}
                 </div>
               </div>
             ) : !loading && (
-              <div style={styles.noStream}>
-                Not currently available on major streaming platforms.
-              </div>
+              <div style={styles.noStream}>Not currently available on major streaming platforms.</div>
             )}
           </div>
         </div>
@@ -132,25 +177,21 @@ export default function MovieModal({
           <div style={styles.footerLeft}>
             {onHide && (
               <button style={styles.btnSecondary} onClick={onHide}>
-                Not for me
+                Hide
               </button>
             )}
             {onAddToWatchlist && (
               <button
-                style={{
-                  ...styles.btnWatchlist,
-                  opacity: isInWatchlist ? 0.5 : 1,
-                }}
+                style={{ ...styles.btnWatchlist, opacity: isInWatchlist ? 0.5 : 1 }}
                 onClick={onAddToWatchlist}
                 disabled={isInWatchlist}
               >
-                {isInWatchlist ? "In watchlist" : "+ Add to watchlist"}
+                {isInWatchlist ? "In watchlist" : "+ Watchlist"}
               </button>
             )}
+            {onRate && <ModalStarRating onRate={onRate} />}
           </div>
-          <button style={styles.btnClose} onClick={onClose}>
-            Close
-          </button>
+          <button style={styles.btnClose} onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
@@ -161,7 +202,7 @@ const styles = {
   overlay: {
     position: "fixed",
     inset: 0,
-    background: "rgba(26,31,58,0.6)",
+    background: "rgba(26,10,58,0.75)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -170,13 +211,14 @@ const styles = {
   },
   modal: {
     background: "#fff",
-    border: "1.5px solid var(--tsr-border)",
+    border: "2px solid var(--tsr-purple)",
     borderRadius: "16px",
     padding: "28px",
     width: "100%",
     maxWidth: "600px",
     maxHeight: "85vh",
     overflowY: "auto",
+    boxShadow: "0 0 30px rgba(123,47,255,0.3)",
   },
   modalRow: {
     display: "flex",
@@ -206,7 +248,7 @@ const styles = {
   },
   title: {
     fontSize: "20px",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "var(--tsr-navy)",
     lineHeight: "1.3",
   },
@@ -236,16 +278,16 @@ const styles = {
   },
   overview: {
     fontSize: "14px",
-    color: "#3a3550",
+    color: "var(--tsr-text)",
     lineHeight: "1.7",
   },
   streamLabel: {
-    fontSize: "12px",
-    fontWeight: "600",
+    fontSize: "11px",
+    fontWeight: "700",
     color: "var(--tsr-text-muted)",
     marginBottom: "8px",
     textTransform: "uppercase",
-    letterSpacing: "0.05em",
+    letterSpacing: "0.08em",
   },
   streamPills: {
     display: "flex",
@@ -274,13 +316,17 @@ const styles = {
     alignItems: "center",
     borderTop: "1.5px solid var(--tsr-border)",
     paddingTop: "16px",
+    flexWrap: "wrap",
+    gap: "10px",
   },
   footerLeft: {
     display: "flex",
     gap: "8px",
+    alignItems: "center",
+    flexWrap: "wrap",
   },
   btnSecondary: {
-    padding: "9px 16px",
+    padding: "8px 14px",
     fontSize: "13px",
     background: "#fff",
     color: "var(--tsr-text-muted)",
@@ -290,7 +336,7 @@ const styles = {
     fontFamily: "inherit",
   },
   btnWatchlist: {
-    padding: "9px 16px",
+    padding: "8px 14px",
     fontSize: "13px",
     background: "var(--tsr-accent-light)",
     color: "var(--tsr-purple)",
@@ -298,7 +344,7 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     fontFamily: "inherit",
-    fontWeight: "500",
+    fontWeight: "600",
   },
   btnClose: {
     padding: "9px 20px",
@@ -309,6 +355,6 @@ const styles = {
     borderRadius: "8px",
     cursor: "pointer",
     fontFamily: "inherit",
-    fontWeight: "500",
+    fontWeight: "600",
   },
 };

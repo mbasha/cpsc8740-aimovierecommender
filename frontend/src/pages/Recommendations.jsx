@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useApp } from "../context/AppContext";
 import MovieTile from "../components/MovieTile";
@@ -17,67 +17,84 @@ const TABS = ["Recommendations", "Watchlist", "Rated", "Hidden"];
 
 export default function Recommendations() {
   const {
-    user,
+    user, setUser,
     recommendations,
     hiddenMovies,
     watchlist,
+    movieMeta,
+    registerMovieMeta,
     hideMovie,
     unhideMovie,
     addToWatchlist,
     removeFromWatchlist,
+    rateMovie,
     rateWatchlistMovie,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState("Recommendations");
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [posters, setPosters] = useState({});
-  const [loadedPosters, setLoadedPosters] = useState(new Set());
   const [tmdbData, setTmdbData] = useState({});
-  const [ratedMovieMeta, setRatedMovieMeta] = useState({});
+  const [fetchedIds, setFetchedIds] = useState(new Set());
+  const [ratingInProgress, setRatingInProgress] = useState(new Set());
+  const fetchingRef = useRef(new Set());
 
   const characterLabel = CHARACTER_LABELS[user?.character] || "your crew";
 
-  // Fetch TMDB data and posters for all movies
-  useEffect(() => {
-    const allMovies = [...recommendations, ...hiddenMovies, ...watchlist];
-    const toFetch = allMovies.filter(r => !loadedPosters.has(r.movieId));
+  // Fetch TMDB data for any movie not yet fetched
+  function fetchMovieTmdb(rec) {
+    if (!rec?.title || fetchingRef.current.has(rec.movieId)) return;
+    fetchingRef.current.add(rec.movieId);
 
-    toFetch.forEach(async rec => {
-      try {
-        const res = await axios.get(`${API}/api/movie`, {
-          params: { title: rec.title }
-        });
+    axios.get(`${API}/api/movie`, { params: { title: rec.title } })
+      .then(res => {
         const data = res.data;
         setTmdbData(prev => ({ ...prev, [rec.movieId]: data }));
-        setRatedMovieMeta(prev => ({ ...prev, [rec.movieId]: { title: rec.title, genres: rec.genres } }));
         if (data.posterUrl) {
           setPosters(prev => ({ ...prev, [rec.movieId]: data.posterUrl }));
         }
-      } catch {
-        // silent fail
-      } finally {
-        setLoadedPosters(prev => new Set([...prev, rec.movieId]));
-      }
+        registerMovieMeta([{ ...rec, title: rec.title }]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setFetchedIds(prev => new Set([...prev, rec.movieId]));
+      });
+  }
+
+  // Fetch for all movies in all lists whenever lists change
+  useEffect(() => {
+    const allMovies = [...recommendations, ...hiddenMovies, ...watchlist];
+    allMovies.forEach(rec => {
+      if (!fetchedIds.has(rec.movieId)) fetchMovieTmdb(rec);
     });
   }, [recommendations.length, hiddenMovies.length, watchlist.length]);
 
-  // Fetch TMDB data for rated movies not in other lists
+  // When a new recommendation appears that hasn't been fetched yet, fetch it
   useEffect(() => {
-    if (activeTab !== "Rated") return;
-    const ratedIds = Object.keys(user?.ratings || {}).map(Number);
-    const knownIds = new Set([...recommendations, ...hiddenMovies, ...watchlist].map(m => m.movieId));
-    const unknownIds = ratedIds.filter(id => !knownIds.has(id) && !loadedPosters.has(id));
+    recommendations.forEach(rec => {
+      if (!fetchedIds.has(rec.movieId)) fetchMovieTmdb(rec);
+    });
+  }, [recommendations]);
 
-    // For unknown rated movies we can't easily look up by title without storing it
-    // Mark them as loaded so we don't keep retrying
-    if (unknownIds.length > 0) {
-      setLoadedPosters(prev => {
-        const next = new Set(prev);
-        unknownIds.forEach(id => next.add(id));
-        return next;
+  async function handleWatchlistRate(movieId, rating) {
+    setRatingInProgress(prev => new Set([...prev, movieId]));
+    await rateWatchlistMovie(movieId, rating);
+    setRatingInProgress(prev => { const n = new Set(prev); n.delete(movieId); return n; });
+  }
+
+  async function handleReRate(movieId, rating) {
+    const updatedUser = { ...user, ratings: { ...user.ratings, [String(movieId)]: rating } };
+    setUser(updatedUser);
+    try {
+      await axios.post(`${API}/api/rate`, {
+        username: user.username,
+        character: user.character || "",
+        ratings: { [String(movieId)]: rating },
       });
+    } catch (e) {
+      console.error("Re-rate failed", e);
     }
-  }, [activeTab]);
+  }
 
   function getDisplayMovies() {
     switch (activeTab) {
@@ -90,7 +107,6 @@ export default function Recommendations() {
 
   const displayMovies = getDisplayMovies();
 
-  // Tab style helper — explicit borderBottomColor on every tab prevents stale underlines
   function tabStyle(tab) {
     const isActive = activeTab === tab;
     return {
@@ -106,55 +122,39 @@ export default function Recommendations() {
       gap: "6px",
       marginBottom: "-1.5px",
       fontFamily: "inherit",
-      fontWeight: isActive ? "600" : "400",
-      transition: "color 0.15s ease",
+      fontWeight: isActive ? "700" : "400",
     };
   }
 
   return (
-    <div style={styles.page}>
+    <div className="light-grid-bg" style={styles.page}>
       <div style={styles.container}>
-        {/* Nav */}
         <div style={styles.nav}>
           <div style={styles.navLeft}>
             <img src="/topshelficon.png" alt="" style={styles.navIcon} />
             <span style={styles.logo}>Top Shelf Rentals</span>
           </div>
-          <div style={styles.navRight}>
-            <div style={styles.userBadge}>{user?.username}</div>
-          </div>
+          <div style={styles.userBadge}>{user?.username}</div>
         </div>
 
-        {/* Header */}
         <div style={styles.header}>
           <h1 style={styles.title}>
-            {activeTab === "Recommendations"
-              ? `Curated by ${characterLabel}`
-              : activeTab}
+            {activeTab === "Recommendations" ? `Curated by ${characterLabel}` : activeTab}
           </h1>
           <p style={styles.subtitle}>
             {activeTab === "Recommendations" && "Click any title for details and where to stream."}
-            {activeTab === "Watchlist" && "Movies you want to watch. Rate them once you've seen them to improve your recommendations."}
-            {activeTab === "Hidden" && "Movies you've hidden. Unhide to add them back."}
-            {activeTab === "Rated" && "All the movies you've rated so far."}
+            {activeTab === "Watchlist" && "Movies you want to watch. Rate them once you've seen them."}
+            {activeTab === "Hidden" && "Hidden movies. Unhide to add back to recommendations."}
+            {activeTab === "Rated" && "All movies you've rated. Click stars to re-rate."}
           </p>
         </div>
 
-        {/* Tabs */}
         <div style={styles.tabBar}>
           {TABS.map(tab => (
-            <button
-              key={tab}
-              style={tabStyle(tab)}
-              onClick={() => setActiveTab(tab)}
-            >
+            <button key={tab} style={tabStyle(tab)} onClick={() => setActiveTab(tab)}>
               {tab}
-              {tab === "Watchlist" && watchlist.length > 0 && (
-                <span style={styles.tabCount}>{watchlist.length}</span>
-              )}
-              {tab === "Hidden" && hiddenMovies.length > 0 && (
-                <span style={styles.tabCount}>{hiddenMovies.length}</span>
-              )}
+              {tab === "Watchlist" && watchlist.length > 0 && <span style={styles.tabCount}>{watchlist.length}</span>}
+              {tab === "Hidden" && hiddenMovies.length > 0 && <span style={styles.tabCount}>{hiddenMovies.length}</span>}
               {tab === "Rated" && Object.keys(user?.ratings || {}).length > 0 && (
                 <span style={styles.tabCount}>{Object.keys(user.ratings).length}</span>
               )}
@@ -173,59 +173,28 @@ export default function Recommendations() {
                 .map(([movieId, rating]) => {
                   const id = parseInt(movieId);
                   const tmdb = tmdbData[id];
-                  const meta = ratedMovieMeta[id];
-                  const knownMovie = [...recommendations, ...hiddenMovies, ...watchlist]
-                    .find(m => m.movieId === id);
-                  const title = knownMovie?.title || meta?.title || null;
-                  const posterLoaded = loadedPosters.has(id);
+                  const meta = movieMeta[id];
+                  const title = meta?.title;
+                  const isFetched = fetchedIds.has(id);
 
                   return (
-                    <div key={movieId} style={styles.ratedRow}>
-                      <div style={styles.ratedPoster}>
-                        {!posterLoaded ? (
-                          <div className="skeleton" style={{ width: "100%", height: "100%" }} />
-                        ) : posters[id] ? (
-                          <img src={posters[id]} alt="" style={styles.ratedPosterImg} />
-                        ) : (
-                          <div style={styles.ratedPosterFallback} />
-                        )}
-                      </div>
-                      <div style={styles.ratedInfo}>
-                        <div style={styles.ratedTitle}>
-                          {title || (
-                            <span style={{ color: "var(--tsr-text-muted)", fontStyle: "italic" }}>
-                              Loading...
-                            </span>
-                          )}
-                        </div>
-                        <div style={styles.ratedMeta}>
-                          {tmdb?.releaseDate
-                            ? tmdb.releaseDate.split("-")[0]
-                            : ""}
-                          {tmdb?.rating > 0
-                            ? ` · ★ ${Number(tmdb.rating).toFixed(1)} community`
-                            : ""}
-                        </div>
-                      </div>
-                      <div style={styles.ratedScore}>
-                        <div style={styles.ratedStars}>
-                          {[1, 2, 3, 4, 5].map(s => (
-                            <span key={s} style={{
-                              color: s <= rating ? "var(--tsr-navy)" : "var(--tsr-border)",
-                              fontSize: "16px",
-                            }}>★</span>
-                          ))}
-                        </div>
-                        <div style={styles.ratedScoreLabel}>Your rating: {rating} / 5</div>
-                      </div>
-                    </div>
+                    <RatedRow
+                      key={movieId}
+                      movieId={id}
+                      rating={rating}
+                      title={title}
+                      tmdb={tmdb}
+                      poster={posters[id]}
+                      isFetched={isFetched}
+                      onReRate={r => handleReRate(id, r)}
+                    />
                   );
                 })
             )}
           </div>
         )}
 
-        {/* Watchlist, Recommendations, Hidden */}
+        {/* Other tabs */}
         {activeTab !== "Rated" && (
           <div>
             {displayMovies.length === 0 ? (
@@ -237,37 +206,24 @@ export default function Recommendations() {
             ) : (
               <div style={styles.grid}>
                 {displayMovies.map(rec => {
-                  const posterLoaded = loadedPosters.has(rec.movieId);
-                  if (!posterLoaded) return <MovieTileSkeleton key={rec.movieId} />;
+                  const isFetched = fetchedIds.has(rec.movieId);
+                  const isRating = ratingInProgress.has(rec.movieId);
+                  if (!isFetched || isRating) return <MovieTileSkeleton key={rec.movieId} />;
                   return (
                     <MovieTile
                       key={rec.movieId}
                       movie={{ ...rec, posterUrl: posters[rec.movieId] }}
                       communityRating={tmdbData[rec.movieId]?.rating}
-                      onClick={() => setSelectedMovie({
-                        ...rec,
-                        posterUrl: posters[rec.movieId],
-                        tmdbData: tmdbData[rec.movieId],
-                      })}
+                      onClick={() => setSelectedMovie({ ...rec, posterUrl: posters[rec.movieId], tmdbData: tmdbData[rec.movieId] })}
                       onHide={() => {
                         if (activeTab === "Hidden") unhideMovie(rec.movieId);
                         else if (activeTab === "Watchlist") removeFromWatchlist(rec.movieId);
                         else hideMovie(rec);
                       }}
-                      hideLabel={
-                        activeTab === "Hidden" ? "Unhide"
-                        : activeTab === "Watchlist" ? "Remove"
-                        : "Hide"
-                      }
-                      onAddToWatchlist={activeTab === "Recommendations"
-                        ? () => addToWatchlist(rec)
-                        : null
-                      }
+                      hideLabel={activeTab === "Hidden" ? "Unhide" : activeTab === "Watchlist" ? "Remove" : "Hide"}
+                      onAddToWatchlist={activeTab === "Recommendations" ? () => addToWatchlist(rec) : null}
                       isInWatchlist={!!watchlist.find(w => w.movieId === rec.movieId)}
-                      onRate={activeTab === "Watchlist"
-                        ? r => rateWatchlistMovie(rec.movieId, r)
-                        : null
-                      }
+                      onRate={activeTab === "Watchlist" ? r => handleWatchlistRate(rec.movieId, r) : null}
                       showRateButton={activeTab === "Watchlist"}
                     />
                   );
@@ -282,162 +238,122 @@ export default function Recommendations() {
         <MovieModal
           movie={selectedMovie}
           onClose={() => setSelectedMovie(null)}
-          onHide={activeTab !== "Hidden" ? () => {
-            hideMovie(selectedMovie);
-            setSelectedMovie(null);
-          } : null}
-          onAddToWatchlist={activeTab === "Recommendations" ? () => {
-            addToWatchlist(selectedMovie);
-            setSelectedMovie(null);
-          } : null}
+          onHide={activeTab !== "Hidden" ? () => { hideMovie(selectedMovie); setSelectedMovie(null); } : null}
+          onAddToWatchlist={activeTab === "Recommendations" ? () => { addToWatchlist(selectedMovie); setSelectedMovie(null); } : null}
           isInWatchlist={!!watchlist.find(w => w.movieId === selectedMovie?.movieId)}
+          onRate={r => rateMovie(selectedMovie.movieId, r)}
         />
       )}
     </div>
   );
 }
 
+function RatedRow({ movieId, rating, title, tmdb, poster, isFetched, onReRate }) {
+  const [hovered, setHovered] = useState(0);
+  const [currentRating, setCurrentRating] = useState(rating);
+
+  function handleRate(star) {
+    setCurrentRating(star);
+    onReRate(star);
+  }
+
+  return (
+    <div style={styles.ratedRow}>
+      <div style={styles.ratedPoster}>
+        {!isFetched ? (
+          <div className="skeleton" style={{ width: "100%", height: "100%" }} />
+        ) : poster ? (
+          <img src={poster} alt="" style={styles.ratedPosterImg} />
+        ) : (
+          <div style={styles.ratedPosterFallback} />
+        )}
+      </div>
+      <div style={styles.ratedInfo}>
+        <div style={styles.ratedTitle}>
+          {!isFetched ? (
+            <div className="skeleton" style={{ height: "14px", width: "55%", borderRadius: "4px" }} />
+          ) : (
+            title || <span style={{ color: "var(--tsr-text-muted)", fontStyle: "italic" }}>Unknown title</span>
+          )}
+        </div>
+        <div style={styles.ratedMeta}>
+          {!isFetched ? (
+            <div className="skeleton" style={{ height: "11px", width: "35%", borderRadius: "4px", marginTop: "4px" }} />
+          ) : (
+            <>
+              {tmdb?.releaseDate ? tmdb.releaseDate.split("-")[0] : ""}
+              {tmdb?.rating > 0 ? ` · ★ ${Number(tmdb.rating).toFixed(1)} community` : ""}
+            </>
+          )}
+        </div>
+      </div>
+      <div style={styles.ratedScore}>
+        <div style={styles.ratedStars}>
+          {[1, 2, 3, 4, 5].map(s => (
+            <button
+              key={s}
+              style={{
+                ...styles.ratedStarBtn,
+                color: s <= (hovered || currentRating) ? "var(--tsr-yellow)" : "var(--tsr-border)",
+              }}
+              onMouseEnter={() => setHovered(s)}
+              onMouseLeave={() => setHovered(0)}
+              onClick={() => handleRate(s)}
+            >★</button>
+          ))}
+        </div>
+        <div style={styles.ratedScoreLabel}>Your rating: {currentRating} / 5</div>
+      </div>
+    </div>
+  );
+}
+
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "var(--tsr-cream)",
-    paddingBottom: "48px",
-  },
-  container: {
-    maxWidth: "1040px",
-    margin: "0 auto",
-    padding: "0 40px",
-  },
+  page: { minHeight: "100vh", paddingBottom: "48px" },
+  container: { maxWidth: "1040px", margin: "0 auto", padding: "0 40px" },
   nav: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "18px 0",
-    borderBottom: "1.5px solid var(--tsr-border)",
-    marginBottom: "32px",
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "18px 0", borderBottom: "1.5px solid var(--tsr-border)", marginBottom: "32px",
   },
-  navLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
-  navIcon: {
-    width: "28px",
-    height: "28px",
-    objectFit: "contain",
-  },
-  logo: {
-    fontSize: "15px",
-    fontWeight: "600",
-    color: "var(--tsr-navy)",
-  },
-  navRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
+  navLeft: { display: "flex", alignItems: "center", gap: "10px" },
+  navIcon: { width: "28px", height: "28px", objectFit: "contain" },
+  logo: { fontSize: "15px", fontWeight: "700", color: "var(--tsr-navy)" },
   userBadge: {
-    fontSize: "13px",
-    color: "var(--tsr-text-muted)",
-    background: "#fff",
-    border: "1px solid var(--tsr-border)",
-    borderRadius: "8px",
-    padding: "6px 14px",
+    fontSize: "13px", color: "var(--tsr-text-muted)",
+    background: "#fff", border: "1px solid var(--tsr-border)",
+    borderRadius: "8px", padding: "6px 14px",
   },
-  header: {
-    marginBottom: "20px",
-  },
-  title: {
-    fontSize: "26px",
-    fontWeight: "600",
-    color: "var(--tsr-navy)",
-    marginBottom: "6px",
-  },
-  subtitle: {
-    fontSize: "14px",
-    color: "var(--tsr-text-muted)",
-  },
-  tabBar: {
-    display: "flex",
-    gap: "0",
-    marginBottom: "28px",
-    borderBottom: "1.5px solid var(--tsr-border)",
-  },
+  header: { marginBottom: "20px" },
+  title: { fontSize: "26px", fontWeight: "700", color: "var(--tsr-navy)", marginBottom: "6px" },
+  subtitle: { fontSize: "14px", color: "var(--tsr-text-muted)" },
+  tabBar: { display: "flex", marginBottom: "28px", borderBottom: "1.5px solid var(--tsr-border)" },
   tabCount: {
-    background: "var(--tsr-warm-gray)",
-    color: "var(--tsr-text-muted)",
-    borderRadius: "20px",
-    padding: "1px 7px",
-    fontSize: "11px",
+    background: "var(--tsr-warm-gray)", color: "var(--tsr-text-muted)",
+    borderRadius: "20px", padding: "1px 7px", fontSize: "11px",
   },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "16px",
-  },
-  emptyState: {
-    fontSize: "14px",
-    color: "var(--tsr-text-muted)",
-    padding: "48px 0",
-    textAlign: "center",
-  },
-  ratedList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
+  grid: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px" },
+  emptyState: { fontSize: "14px", color: "var(--tsr-text-muted)", padding: "48px 0", textAlign: "center" },
+  ratedList: { display: "flex", flexDirection: "column", gap: "8px" },
   ratedRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    background: "#fff",
-    border: "1px solid var(--tsr-border)",
-    borderRadius: "10px",
-    padding: "12px 16px",
+    display: "flex", alignItems: "center", gap: "16px",
+    background: "#fff", border: "1px solid var(--tsr-border)",
+    borderRadius: "10px", padding: "12px 16px",
   },
   ratedPoster: {
-    width: "40px",
-    height: "56px",
-    borderRadius: "4px",
-    overflow: "hidden",
-    background: "var(--tsr-warm-gray)",
-    flexShrink: 0,
+    width: "40px", height: "56px", borderRadius: "4px",
+    overflow: "hidden", background: "var(--tsr-warm-gray)", flexShrink: 0,
   },
-  ratedPosterImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
+  ratedPosterImg: { width: "100%", height: "100%", objectFit: "cover" },
+  ratedPosterFallback: { width: "100%", height: "100%", background: "var(--tsr-warm-gray)" },
+  ratedInfo: { flex: 1 },
+  ratedTitle: { fontSize: "14px", fontWeight: "500", color: "var(--tsr-navy)", marginBottom: "3px" },
+  ratedMeta: { fontSize: "12px", color: "var(--tsr-text-muted)" },
+  ratedScore: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px" },
+  ratedStars: { display: "flex", gap: "2px" },
+  ratedStarBtn: {
+    fontSize: "18px", background: "none", border: "none",
+    cursor: "pointer", padding: "1px", lineHeight: 1,
+    transition: "color 0.1s", fontFamily: "inherit",
   },
-  ratedPosterFallback: {
-    width: "100%",
-    height: "100%",
-    background: "var(--tsr-warm-gray)",
-  },
-  ratedInfo: {
-    flex: 1,
-  },
-  ratedTitle: {
-    fontSize: "14px",
-    fontWeight: "500",
-    color: "var(--tsr-navy)",
-    marginBottom: "3px",
-  },
-  ratedMeta: {
-    fontSize: "12px",
-    color: "var(--tsr-text-muted)",
-  },
-  ratedScore: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "3px",
-  },
-  ratedStars: {
-    display: "flex",
-    gap: "2px",
-  },
-  ratedScoreLabel: {
-    fontSize: "11px",
-    color: "var(--tsr-text-muted)",
-  },
+  ratedScoreLabel: { fontSize: "11px", color: "var(--tsr-text-muted)" },
 };
