@@ -1,10 +1,9 @@
 #!/bin/bash
 # Reset all user data from the database
-# Usage: ./scripts/reset_db.sh
+# Usage: make reset-db
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-# Load .env
 if [ -f "$ROOT/.env" ]; then
   export $(grep -v '^#' "$ROOT/.env" | xargs)
 fi
@@ -24,12 +23,24 @@ if [ "$confirm" != "yes" ]; then
   exit 0
 fi
 
-psql "$DATABASE_URL" <<EOF
-TRUNCATE TABLE hidden CASCADE;
-TRUNCATE TABLE watchlist CASCADE;
-TRUNCATE TABLE recommendations CASCADE;
-TRUNCATE TABLE ratings CASCADE;
-TRUNCATE TABLE users CASCADE;
-EOF
+source "$ROOT/venv/bin/activate"
 
-echo "Database cleared successfully."
+python3 - <<EOF
+import os
+import psycopg2
+
+url = os.environ['DATABASE_URL']
+conn = psycopg2.connect(url)
+cur = conn.cursor()
+
+cur.execute("TRUNCATE TABLE hidden CASCADE;")
+cur.execute("TRUNCATE TABLE watchlist CASCADE;")
+cur.execute("TRUNCATE TABLE recommendations CASCADE;")
+cur.execute("TRUNCATE TABLE ratings CASCADE;")
+cur.execute("TRUNCATE TABLE users CASCADE;")
+
+conn.commit()
+cur.close()
+conn.close()
+print("Database cleared successfully.")
+EOF

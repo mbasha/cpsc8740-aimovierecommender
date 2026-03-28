@@ -33,32 +33,23 @@ export default function Recommendations() {
   const [posters, setPosters] = useState({});
   const [loadedPosters, setLoadedPosters] = useState(new Set());
   const [tmdbData, setTmdbData] = useState({});
+  const [ratedMovieMeta, setRatedMovieMeta] = useState({});
 
   const characterLabel = CHARACTER_LABELS[user?.character] || "your crew";
 
+  // Fetch TMDB data and posters for all movies
   useEffect(() => {
-    const ratedIds = Object.keys(user?.ratings || {}).map(Number);
-    const allMovies = [
-      ...recommendations,
-      ...hiddenMovies,
-      ...watchlist,
-      ...ratedIds.map(id => ({ movieId: id })),
-    ];
+    const allMovies = [...recommendations, ...hiddenMovies, ...watchlist];
     const toFetch = allMovies.filter(r => !loadedPosters.has(r.movieId));
 
     toFetch.forEach(async rec => {
-      // For rated movies we need to look up title from recommendations or existing tmdbData
-      const knownMovie = [...recommendations, ...hiddenMovies, ...watchlist]
-        .find(m => m.movieId === rec.movieId);
-      const title = knownMovie?.title;
-      if (!title) return;
-
       try {
         const res = await axios.get(`${API}/api/movie`, {
-          params: { title }
+          params: { title: rec.title }
         });
         const data = res.data;
         setTmdbData(prev => ({ ...prev, [rec.movieId]: data }));
+        setRatedMovieMeta(prev => ({ ...prev, [rec.movieId]: { title: rec.title, genres: rec.genres } }));
         if (data.posterUrl) {
           setPosters(prev => ({ ...prev, [rec.movieId]: data.posterUrl }));
         }
@@ -70,6 +61,24 @@ export default function Recommendations() {
     });
   }, [recommendations.length, hiddenMovies.length, watchlist.length]);
 
+  // Fetch TMDB data for rated movies not in other lists
+  useEffect(() => {
+    if (activeTab !== "Rated") return;
+    const ratedIds = Object.keys(user?.ratings || {}).map(Number);
+    const knownIds = new Set([...recommendations, ...hiddenMovies, ...watchlist].map(m => m.movieId));
+    const unknownIds = ratedIds.filter(id => !knownIds.has(id) && !loadedPosters.has(id));
+
+    // For unknown rated movies we can't easily look up by title without storing it
+    // Mark them as loaded so we don't keep retrying
+    if (unknownIds.length > 0) {
+      setLoadedPosters(prev => {
+        const next = new Set(prev);
+        unknownIds.forEach(id => next.add(id));
+        return next;
+      });
+    }
+  }, [activeTab]);
+
   function getDisplayMovies() {
     switch (activeTab) {
       case "Recommendations": return recommendations;
@@ -80,6 +89,27 @@ export default function Recommendations() {
   }
 
   const displayMovies = getDisplayMovies();
+
+  // Tab style helper — explicit borderBottomColor on every tab prevents stale underlines
+  function tabStyle(tab) {
+    const isActive = activeTab === tab;
+    return {
+      padding: "10px 20px",
+      fontSize: "14px",
+      background: "none",
+      border: "none",
+      borderBottom: isActive ? "2.5px solid var(--tsr-purple)" : "2.5px solid transparent",
+      color: isActive ? "var(--tsr-navy)" : "var(--tsr-text-muted)",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: "6px",
+      marginBottom: "-1.5px",
+      fontFamily: "inherit",
+      fontWeight: isActive ? "600" : "400",
+      transition: "color 0.15s ease",
+    };
+  }
 
   return (
     <div style={styles.page}>
@@ -115,10 +145,7 @@ export default function Recommendations() {
           {TABS.map(tab => (
             <button
               key={tab}
-              style={{
-                ...styles.tab,
-                ...(activeTab === tab ? styles.tabActive : {}),
-              }}
+              style={tabStyle(tab)}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
@@ -145,28 +172,38 @@ export default function Recommendations() {
                 .sort((a, b) => b[1] - a[1])
                 .map(([movieId, rating]) => {
                   const id = parseInt(movieId);
-                  const data = tmdbData[id];
+                  const tmdb = tmdbData[id];
+                  const meta = ratedMovieMeta[id];
                   const knownMovie = [...recommendations, ...hiddenMovies, ...watchlist]
                     .find(m => m.movieId === id);
-                  const title = knownMovie?.title || data?.title || `Movie ${movieId}`;
+                  const title = knownMovie?.title || meta?.title || null;
+                  const posterLoaded = loadedPosters.has(id);
 
                   return (
                     <div key={movieId} style={styles.ratedRow}>
                       <div style={styles.ratedPoster}>
-                        {posters[id] ? (
+                        {!posterLoaded ? (
+                          <div className="skeleton" style={{ width: "100%", height: "100%" }} />
+                        ) : posters[id] ? (
                           <img src={posters[id]} alt="" style={styles.ratedPosterImg} />
                         ) : (
                           <div style={styles.ratedPosterFallback} />
                         )}
                       </div>
                       <div style={styles.ratedInfo}>
-                        <div style={styles.ratedTitle}>{title}</div>
+                        <div style={styles.ratedTitle}>
+                          {title || (
+                            <span style={{ color: "var(--tsr-text-muted)", fontStyle: "italic" }}>
+                              Loading...
+                            </span>
+                          )}
+                        </div>
                         <div style={styles.ratedMeta}>
-                          {data?.releaseDate
-                            ? data.releaseDate.split("-")[0]
+                          {tmdb?.releaseDate
+                            ? tmdb.releaseDate.split("-")[0]
                             : ""}
-                          {data?.rating > 0
-                            ? ` · ★ ${Number(data.rating).toFixed(1)} community`
+                          {tmdb?.rating > 0
+                            ? ` · ★ ${Number(tmdb.rating).toFixed(1)} community`
                             : ""}
                         </div>
                       </div>
@@ -188,13 +225,13 @@ export default function Recommendations() {
           </div>
         )}
 
-        {/* Watchlist, Recommendations, Hidden tabs */}
+        {/* Watchlist, Recommendations, Hidden */}
         {activeTab !== "Rated" && (
           <div>
             {displayMovies.length === 0 ? (
               <div style={styles.emptyState}>
                 {activeTab === "Hidden" && "No hidden movies yet."}
-                {activeTab === "Watchlist" && "No movies saved to your watchlist yet. Add movies from your recommendations."}
+                {activeTab === "Watchlist" && "No movies saved yet. Add from your recommendations."}
                 {activeTab === "Recommendations" && "No recommendations yet."}
               </div>
             ) : (
@@ -228,7 +265,7 @@ export default function Recommendations() {
                       }
                       isInWatchlist={!!watchlist.find(w => w.movieId === rec.movieId)}
                       onRate={activeTab === "Watchlist"
-                        ? rating => rateWatchlistMovie(rec.movieId, rating)
+                        ? r => rateWatchlistMovie(rec.movieId, r)
                         : null
                       }
                       showRateButton={activeTab === "Watchlist"}
@@ -325,26 +362,6 @@ const styles = {
     gap: "0",
     marginBottom: "28px",
     borderBottom: "1.5px solid var(--tsr-border)",
-  },
-  tab: {
-    padding: "10px 20px",
-    fontSize: "14px",
-    background: "none",
-    border: "none",
-    borderBottom: "2.5px solid transparent",
-    color: "var(--tsr-text-muted)",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    marginBottom: "-1.5px",
-    transition: "color 0.15s ease",
-    fontFamily: "inherit",
-  },
-  tabActive: {
-    color: "var(--tsr-navy)",
-    borderBottomColor: "var(--tsr-purple)",
-    fontWeight: "600",
   },
   tabCount: {
     background: "var(--tsr-warm-gray)",

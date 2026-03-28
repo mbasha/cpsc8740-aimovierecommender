@@ -37,11 +37,14 @@ export default function Login() {
     <div style={styles.page}>
       <div style={styles.left}>
         <div style={styles.leftContent}>
-          <img
-            src="/topshelfrentals.png"
-            alt="Top Shelf Rentals"
-            style={styles.logo}
-          />
+          {/* Logo on black background to match the image's own background */}
+          <div style={styles.logoWrapper}>
+            <img
+              src="/topshelfrentals.png"
+              alt="Top Shelf Rentals"
+              style={styles.logo}
+            />
+          </div>
           <p style={styles.tagline}>
             Your neighborhood video store — now powered by AI.
           </p>
@@ -56,21 +59,21 @@ export default function Login() {
             <div style={styles.staffHeading}>Meet the staff</div>
             <div style={styles.staffList}>
               <div style={styles.staffItem}>
-                <div style={styles.staffDot} />
+                <div style={{ ...styles.staffDot, background: "var(--tsr-red)" }} />
                 <div>
                   <div style={styles.staffName}>Randy Meeks</div>
                   <div style={styles.staffRole}>Horror specialist. Knows every rule.</div>
                 </div>
               </div>
               <div style={styles.staffItem}>
-                <div style={styles.staffDot} />
+                <div style={{ ...styles.staffDot, background: "var(--tsr-teal)" }} />
                 <div>
                   <div style={styles.staffName}>The Valets</div>
                   <div style={styles.staffRole}>Action & blockbusters. Maximum enthusiasm.</div>
                 </div>
               </div>
               <div style={styles.staffItem}>
-                <div style={styles.staffDot} />
+                <div style={{ ...styles.staffDot, background: "var(--tsr-purple)" }} />
                 <div>
                   <div style={styles.staffName}>Abed Nadir</div>
                   <div style={styles.staffRole}>Cinema analyst. Has seen everything twice.</div>
@@ -127,23 +130,22 @@ const styles = {
     gridTemplateColumns: "1fr 1fr",
   },
   left: {
-    background: "var(--tsr-navy)",
+    background: "#000000",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     padding: "64px 56px",
-    position: "relative",
-    overflow: "hidden",
   },
   leftContent: {
     maxWidth: "440px",
-    position: "relative",
-    zIndex: 1,
+  },
+  logoWrapper: {
+    marginBottom: "28px",
   },
   logo: {
     width: "100%",
     maxWidth: "320px",
-    marginBottom: "28px",
+    display: "block",
   },
   tagline: {
     fontSize: "16px",
@@ -186,7 +188,6 @@ const styles = {
     width: "8px",
     height: "8px",
     borderRadius: "50%",
-    background: "var(--tsr-teal)",
     marginTop: "5px",
     flexShrink: 0,
   },
@@ -253,7 +254,6 @@ const styles = {
     fontFamily: "inherit",
     background: "#fff",
     color: "var(--tsr-text)",
-    transition: "border-color 0.15s",
   },
   error: {
     fontSize: "13px",
@@ -270,7 +270,6 @@ const styles = {
     borderRadius: "10px",
     fontWeight: "600",
     marginBottom: "16px",
-    transition: "opacity 0.15s ease",
     cursor: "pointer",
     letterSpacing: "0.01em",
   },

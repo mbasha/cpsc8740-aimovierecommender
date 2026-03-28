@@ -22,7 +22,7 @@ build-api:
 
 install:
 	@echo "Installing Python dependencies..."
-	pip install jupyter pandas numpy matplotlib seaborn scikit-surprise flask
+	pip install jupyter pandas numpy matplotlib seaborn scikit-surprise flask psycopg2-binary
 	@echo "Installing frontend dependencies..."
 	cd frontend && npm install
 	@echo "Installing Go dependencies..."

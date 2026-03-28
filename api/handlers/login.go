@@ -34,12 +34,26 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		hidden = []store.Recommendation{}
 	}
 
+	// Build set of hidden movie IDs
+	hiddenSet := make(map[int]bool)
+	for _, h := range hidden {
+		hiddenSet[h.MovieID] = true
+	}
+
+	// Filter hidden movies out of recommendations
+	filteredRecs := []store.Recommendation{}
+	for _, rec := range user.Recommendations {
+		if !hiddenSet[rec.MovieID] {
+			filteredRecs = append(filteredRecs, rec)
+		}
+	}
+
 	jsonOK(w, map[string]interface{}{
 		"username":        user.Username,
 		"character":       user.Character,
 		"isNew":           user.IsNew,
 		"ratings":         user.Ratings,
-		"recommendations": user.Recommendations,
+		"recommendations": filteredRecs,
 		"watchlist":       watchlist,
 		"hidden":          hidden,
 	})
