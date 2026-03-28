@@ -5,31 +5,34 @@ const characters = [
     id: "randy",
     name: "Randy Meeks",
     source: "Scream",
-    buttonLabel: "Choose Randy",
+    buttonLabel: "Ask Randy",
+    specialty: "Horror & Cult Classics",
     tagline: "I know the rules. Let me tell you which movies you survive.",
-    description: "Horror obsessive. Cinephile. Will judge your taste — but he's never wrong.",
-    accent: "#1a1a1a",
-    mood: "For fans of genre films, cult classics, and movies with rules.",
+    description: "Randy has seen every horror film ever made, twice. He knows the rules, the tropes, and every film that broke them. If you want something that'll keep you up at night — or something that'll prove horror is serious cinema — Randy's your guy.",
+    mood: "Best for: horror, suspense, cult favorites, genre films",
+    accent: "#e63946",
   },
   {
     id: "valets",
     name: "The Valets",
     source: "Key & Peele",
-    buttonLabel: "Choose The Valets",
+    buttonLabel: "Ask The Valets",
+    specialty: "Action & Blockbusters",
     tagline: "Oh SNAAAP. You came to the right guys.",
-    description: "Encyclopedic knowledge. Maximum enthusiasm. They've seen everything and loved most of it.",
-    accent: "#1a1a1a",
-    mood: "For fans of crowd pleasers, blockbusters, and genuinely great cinema.",
+    description: "The Valets have encyclopedic knowledge of every action movie, blockbuster, and crowd-pleaser ever made. They've seen them all, they remember every scene, and they will not stop talking about them. Maximum enthusiasm, zero chill.",
+    mood: "Best for: action, blockbusters, crowd pleasers, anything with a great trailer",
+    accent: "#00b4a6",
   },
   {
     id: "abed",
     name: "Abed Nadir",
     source: "Community",
-    buttonLabel: "Choose Abed",
+    buttonLabel: "Ask Abed",
+    specialty: "Cinema & Analysis",
     tagline: "Cool. Cool cool cool. Let's figure out your narrative arc.",
-    description: "Analytical. Precise. Will identify your cinematic tropes before you do.",
-    accent: "#1a1a1a",
-    mood: "For fans of structure, subtext, and films that reward close watching.",
+    description: "Abed approaches film like a system — he'll analyze your viewing patterns, identify your tropes, and generate a watchlist optimized for your specific character type. He's seen everything and remembered all of it. Precise. Reliable. Occasionally unsettling.",
+    mood: "Best for: prestige films, classics, anything with subtext worth analyzing",
+    accent: "#4a2d7a",
   }
 ];
 
@@ -40,35 +43,32 @@ export default function CharacterSelect() {
     <div style={styles.page}>
       <div style={styles.container}>
         <div style={styles.header}>
-          <div style={styles.eyebrow}>Welcome, {user?.username}</div>
-          <h1 style={styles.title}>Who do you want to help you tonight?</h1>
-          <p style={styles.subtitle}>
-            Pick your employee. They'll ask what you've seen, then build your list.
-          </p>
+          <img src="/topshelficon.png" alt="Top Shelf Rentals" style={styles.icon} />
+          <div>
+            <div style={styles.eyebrow}>Welcome, {user?.username}</div>
+            <h1 style={styles.title}>Who's helping you tonight?</h1>
+            <p style={styles.subtitle}>
+              Pick a staff member. They'll ask what you've seen, then build your list.
+            </p>
+          </div>
         </div>
         <div style={styles.grid}>
           {characters.map(char => (
             <div key={char.id} style={styles.card}>
-              <div style={styles.cardTop}>
-                <div style={styles.cardHeader}>
-                  <div>
-                    <div style={styles.cardName}>{char.name}</div>
-                    <div style={styles.cardSource}>{char.source}</div>
-                  </div>
-                </div>
+              <div style={{ ...styles.cardAccent, background: char.accent }} />
+              <div style={styles.cardBody}>
+                <div style={styles.specialtyBadge}>{char.specialty}</div>
+                <div style={styles.cardName}>{char.name}</div>
+                <div style={styles.cardSource}>{char.source}</div>
                 <div style={styles.cardTagline}>"{char.tagline}"</div>
                 <div style={styles.cardDesc}>{char.description}</div>
                 <div style={styles.cardMood}>{char.mood}</div>
               </div>
               <button
-                style={styles.btn}
+                style={{ ...styles.btn, background: char.accent }}
                 onClick={() => setCharacter(char)}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = "#333";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = "#1a1a1a";
-                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "1"}
               >
                 {char.buttonLabel} →
               </button>
@@ -83,35 +83,45 @@ export default function CharacterSelect() {
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: "64px 40px",
-    background: "#f7f6f2",
+    background: "var(--tsr-cream)",
+    padding: "56px 40px",
   },
   container: {
     maxWidth: "1040px",
     margin: "0 auto",
   },
   header: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "20px",
     marginBottom: "48px",
+  },
+  icon: {
+    width: "52px",
+    height: "52px",
+    objectFit: "contain",
+    marginTop: "4px",
+    flexShrink: 0,
   },
   eyebrow: {
     fontSize: "12px",
     fontWeight: "500",
-    color: "#aaa",
+    color: "var(--tsr-teal)",
     textTransform: "uppercase",
     letterSpacing: "0.1em",
-    marginBottom: "12px",
+    marginBottom: "8px",
   },
   title: {
-    fontSize: "36px",
-    fontWeight: "500",
-    color: "#1a1a1a",
-    marginBottom: "12px",
+    fontSize: "34px",
+    fontWeight: "600",
+    color: "var(--tsr-navy)",
+    marginBottom: "8px",
     lineHeight: "1.2",
   },
   subtitle: {
     fontSize: "16px",
-    color: "#888",
-    lineHeight: "1.6",
+    color: "var(--tsr-text-muted)",
+    lineHeight: "1.5",
   },
   grid: {
     display: "grid",
@@ -119,68 +129,75 @@ const styles = {
     gap: "24px",
   },
   card: {
-    background: "#fff",
-    border: "1px solid #e0dfd8",
+    background: "var(--tsr-card)",
+    border: "1.5px solid var(--tsr-border)",
     borderRadius: "16px",
-    padding: "32px 28px",
+    overflow: "hidden",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
-    minHeight: "340px",
-    transition: "box-shadow 0.2s ease, transform 0.2s ease",
   },
-  cardTop: {
+  cardAccent: {
+    height: "6px",
+    width: "100%",
+  },
+  cardBody: {
+    padding: "24px 24px 20px",
     flex: 1,
-    marginBottom: "28px",
-  },
-  cardHeader: {
     display: "flex",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    marginBottom: "20px",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  specialtyBadge: {
+    display: "inline-block",
+    fontSize: "11px",
+    fontWeight: "600",
+    color: "var(--tsr-text-muted)",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    marginBottom: "4px",
   },
   cardName: {
     fontSize: "20px",
-    fontWeight: "500",
-    color: "#1a1a1a",
-    marginBottom: "4px",
+    fontWeight: "600",
+    color: "var(--tsr-navy)",
   },
   cardSource: {
     fontSize: "13px",
-    color: "#aaa",
+    color: "var(--tsr-text-muted)",
+    marginBottom: "4px",
   },
   cardTagline: {
     fontSize: "14px",
-    color: "#444",
+    color: "#3a3550",
     fontStyle: "italic",
     lineHeight: "1.6",
-    marginBottom: "16px",
     paddingLeft: "12px",
-    borderLeft: "2px solid #e0dfd8",
+    borderLeft: "3px solid var(--tsr-border)",
+    marginBottom: "4px",
   },
   cardDesc: {
-    fontSize: "14px",
-    color: "#666",
-    lineHeight: "1.6",
-    marginBottom: "12px",
+    fontSize: "13px",
+    color: "var(--tsr-text-muted)",
+    lineHeight: "1.65",
   },
   cardMood: {
     fontSize: "12px",
-    color: "#aaa",
-    lineHeight: "1.5",
-    background: "#f7f6f2",
+    color: "var(--tsr-text-muted)",
+    background: "var(--tsr-warm-gray)",
     borderRadius: "8px",
     padding: "8px 12px",
+    marginTop: "4px",
   },
   btn: {
-    width: "100%",
-    padding: "13px 20px",
+    margin: "0 24px 24px",
+    padding: "12px 20px",
     fontSize: "14px",
-    background: "#1a1a1a",
     color: "#fff",
     border: "none",
     borderRadius: "10px",
-    fontWeight: "500",
-    transition: "background 0.15s ease",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "opacity 0.15s ease",
+    letterSpacing: "0.01em",
   },
 };

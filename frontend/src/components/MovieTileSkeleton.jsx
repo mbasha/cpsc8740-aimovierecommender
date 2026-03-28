@@ -10,7 +10,7 @@ export default function MovieTileSkeleton() {
           <div className="skeleton" style={{ height: "10px", width: "35%", borderRadius: "4px" }} />
         </div>
       </div>
-      <div style={styles.hideBtn} />
+      <div style={styles.actions} />
     </div>
   );
 }
@@ -18,7 +18,7 @@ export default function MovieTileSkeleton() {
 const styles = {
   tile: {
     background: "#fff",
-    border: "1px solid #e0dfd8",
+    border: "1.5px solid var(--tsr-border)",
     borderRadius: "10px",
     overflow: "hidden",
     display: "flex",
@@ -30,15 +30,15 @@ const styles = {
     borderRadius: 0,
   },
   info: {
-    padding: "10px 10px 4px",
+    padding: "10px 10px 6px",
     flex: 1,
   },
   scoreRow: {
     display: "flex",
     justifyContent: "space-between",
   },
-  hideBtn: {
-    height: "29px",
-    borderTop: "1px solid #f0efea",
+  actions: {
+    height: "30px",
+    borderTop: "1px solid var(--tsr-warm-gray)",
   },
 };
