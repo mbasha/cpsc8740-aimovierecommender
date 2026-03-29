@@ -10,44 +10,53 @@ export function AppProvider({ children }) {
   const [recommendations, setRecommendations] = useState([]);
   const [hiddenMovies, setHiddenMovies] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
-  // movieMeta: {[movieId]: {title, genres, estimatedRating}} — persists across tab changes
+  // movieMeta: {[movieId]: {title, genres}} — populated from all sources
   const [movieMeta, setMovieMeta] = useState({});
 
-  function initFromLogin(userData) {
-    setUser(userData);
-    setHiddenMovies(userData.hidden || []);
-    setWatchlist(userData.watchlist || []);
-    // Seed movieMeta from all known movies
-    const meta = {};
-    const allMovies = [
-      ...(userData.recommendations || []),
-      ...(userData.hidden || []),
-      ...(userData.watchlist || []),
-    ];
-    allMovies.forEach(m => {
-      meta[m.movieId] = { title: m.title, genres: m.genres, estimatedRating: m.estimatedRating };
-    });
-    setMovieMeta(meta);
-  }
-
-  // Register movie metadata whenever we encounter a movie
   function registerMovieMeta(movies) {
+    if (!movies?.length) return;
     setMovieMeta(prev => {
       const next = { ...prev };
       movies.forEach(m => {
         if (m.movieId && m.title) {
-          next[m.movieId] = { title: m.title, genres: m.genres, estimatedRating: m.estimatedRating };
+          next[m.movieId] = { title: m.title, genres: m.genres || "" };
         }
       });
       return next;
     });
   }
 
+  function initFromLogin(userData) {
+    setUser(userData);
+    setHiddenMovies(userData.hidden || []);
+    setWatchlist(userData.watchlist || []);
+
+    // Seed movieMeta from ALL sources including ratedMovies
+    const allMovies = [
+      ...(userData.recommendations || []),
+      ...(userData.hidden || []),
+      ...(userData.watchlist || []),
+      ...(userData.ratedMovies || []),
+    ];
+    registerMovieMeta(allMovies);
+
+    if (userData.recommendations?.length > 0 && !userData.isNew) {
+      // Don't pre-populate — checkin handles routing
+    }
+  }
+
   const refreshRecommendations = useCallback(async (currentUser, currentHidden, newRecs) => {
-    const hiddenIds = currentHidden.map(h => h.movieId);
-    let filtered = newRecs.filter(r => !hiddenIds.includes(r.movieId));
+    const hiddenIds = new Set(currentHidden.map(h => h.movieId));
+
+    // Preserve isNew only for genuinely new movies
+    const prevIds = new Set(recommendations.map(r => r.movieId));
+    let filtered = newRecs
+      .filter(r => !hiddenIds.has(r.movieId))
+      .map(r => ({ ...r, isNew: !prevIds.has(r.movieId) }));
+
     registerMovieMeta(filtered);
 
+    // Fill to 10 if needed
     let attempts = 0;
     while (filtered.length < 10 && attempts < 5) {
       try {
@@ -57,14 +66,16 @@ export function AppProvider({ children }) {
           hiddenIds: [...hiddenIds, ...filtered.map(r => r.movieId)],
         });
         if (res.data.recommendation) {
-          filtered = [...filtered, res.data.recommendation];
-          registerMovieMeta([res.data.recommendation]);
+          const rep = { ...res.data.recommendation, isNew: true };
+          filtered = [...filtered, rep];
+          registerMovieMeta([rep]);
         } else break;
       } catch { break; }
       attempts++;
     }
+
     setRecommendations(filtered);
-  }, []);
+  }, [recommendations]);
 
   const hideMovie = useCallback(async (movie) => {
     const newHidden = [...hiddenMovies, movie];
@@ -82,9 +93,9 @@ export function AppProvider({ children }) {
         hiddenIds: newHidden.map(r => r.movieId),
       });
       if (res.data.recommendation) {
-        const replacement = res.data.recommendation;
-        registerMovieMeta([replacement]);
-        setRecommendations([...newRecs, replacement]);
+        const rep = { ...res.data.recommendation, isNew: true };
+        registerMovieMeta([rep]);
+        setRecommendations([...newRecs, rep]);
       } else {
         setRecommendations(newRecs);
       }
@@ -99,15 +110,12 @@ export function AppProvider({ children }) {
     try {
       await axios.post(`${API}/api/hidden/remove`, { username: user.username, movieId });
     } catch {}
-    if (movie) setRecommendations(prev => [...prev, { ...movie, isNew: true }]);
+    if (movie) setRecommendations(prev => [...prev, { ...movie, isNew: false }]);
   }, [hiddenMovies, user]);
 
   const addToWatchlist = useCallback(async (movie) => {
     if (watchlist.find(m => m.movieId === movie.movieId)) return;
-    const item = {
-      movieId: movie.movieId, title: movie.title,
-      genres: movie.genres, estimatedRating: movie.estimatedRating,
-    };
+    const item = { movieId: movie.movieId, title: movie.title, genres: movie.genres, estimatedRating: movie.estimatedRating };
     setWatchlist(prev => [...prev, item]);
     try {
       await axios.post(`${API}/api/watchlist/add`, { username: user.username, movie: item });
@@ -124,12 +132,9 @@ export function AppProvider({ children }) {
   const rateMovie = useCallback(async (movieId, rating, removeFromWatchlistAfter = false) => {
     if (!user) return;
 
-    // Ensure we have meta for this movie
-    const knownMovie = [...recommendations, ...hiddenMovies, ...watchlist]
-      .find(m => m.movieId === movieId);
-    if (knownMovie) {
-      registerMovieMeta([knownMovie]);
-    }
+    // Ensure meta is stored
+    const knownMovie = [...recommendations, ...hiddenMovies, ...watchlist].find(m => m.movieId === movieId);
+    if (knownMovie) registerMovieMeta([knownMovie]);
 
     const updatedUser = { ...user, ratings: { ...user.ratings, [String(movieId)]: rating } };
     setUser(updatedUser);
@@ -142,10 +147,16 @@ export function AppProvider({ children }) {
     }
 
     try {
+      // Send movieMeta so the server can store title/genres in catalog
+      const metaToSend = knownMovie
+        ? [{ movieId: knownMovie.movieId, title: knownMovie.title, genres: knownMovie.genres }]
+        : [];
+
       const res = await axios.post(`${API}/api/rate`, {
         username: user.username,
         character: user.character || character?.id || "",
         ratings: { [String(movieId)]: rating },
+        movieMeta: metaToSend,
       });
       await refreshRecommendations(updatedUser, hiddenMovies, res.data.recommendations);
     } catch (e) {

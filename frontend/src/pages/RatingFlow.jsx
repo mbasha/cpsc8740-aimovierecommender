@@ -245,20 +245,28 @@ export default function RatingFlow() {
   }
 
   async function handleSubmit(finalRatings) {
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API}/api/rate`, {
-        username: user.username,
-        character: character.id,
-        ratings: finalRatings,
-      });
-      setRecommendations(res.data.recommendations);
-    } catch (e) {
-      console.error("Failed to get recommendations", e);
-    } finally {
-      setLoading(false);
+      setLoading(true);
+      try {
+        // Build movieMeta for all rated movies so backend can store titles
+        const movieMeta = Object.keys(finalRatings).map(movieIdStr => {
+          const id = parseInt(movieIdStr);
+          const movie = allMovies.find(m => m.movieId === id);
+          return movie ? { movieId: id, title: movie.title, genres: movie.genres } : null;
+        }).filter(Boolean);
+
+        const res = await axios.post(`${API}/api/rate`, {
+          username: user.username,
+          character: character.id,
+          ratings: finalRatings,
+          movieMeta,
+        });
+        setRecommendations(res.data.recommendations);
+      } catch (e) {
+        console.error("Failed to get recommendations", e);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
   if (loading) {
     return (

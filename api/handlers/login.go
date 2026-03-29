@@ -34,13 +34,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		hidden = []store.Recommendation{}
 	}
 
-	// Build set of hidden movie IDs
+	// Get rated movies with titles from catalog
+	ratedMovies := db.GetRatedMovies(body.Username)
+	if ratedMovies == nil {
+		ratedMovies = []db.RatedMovie{}
+	}
+
+	// Filter hidden movie IDs out of recommendations
 	hiddenSet := make(map[int]bool)
 	for _, h := range hidden {
 		hiddenSet[h.MovieID] = true
 	}
-
-	// Filter hidden movies out of recommendations
 	filteredRecs := []store.Recommendation{}
 	for _, rec := range user.Recommendations {
 		if !hiddenSet[rec.MovieID] {
@@ -56,5 +60,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"recommendations": filteredRecs,
 		"watchlist":       watchlist,
 		"hidden":          hidden,
+		"ratedMovies":     ratedMovies,
 	})
 }

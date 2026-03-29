@@ -29,6 +29,7 @@ export default function Recommendations() {
     removeFromWatchlist,
     rateMovie,
     rateWatchlistMovie,
+    refreshRecommendations,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState("Recommendations");
@@ -41,7 +42,6 @@ export default function Recommendations() {
 
   const characterLabel = CHARACTER_LABELS[user?.character] || "your crew";
 
-  // Fetch TMDB data for any movie not yet fetched
   function fetchMovieTmdb(rec) {
     if (!rec?.title || fetchingRef.current.has(rec.movieId)) return;
     fetchingRef.current.add(rec.movieId);
@@ -61,7 +61,7 @@ export default function Recommendations() {
       });
   }
 
-  // Fetch for all movies in all lists whenever lists change
+  // Fetch TMDB for all movies in all lists
   useEffect(() => {
     const allMovies = [...recommendations, ...hiddenMovies, ...watchlist];
     allMovies.forEach(rec => {
@@ -69,12 +69,27 @@ export default function Recommendations() {
     });
   }, [recommendations.length, hiddenMovies.length, watchlist.length]);
 
-  // When a new recommendation appears that hasn't been fetched yet, fetch it
+  // Also fetch when new recommendations come in
   useEffect(() => {
     recommendations.forEach(rec => {
       if (!fetchedIds.has(rec.movieId)) fetchMovieTmdb(rec);
     });
   }, [recommendations]);
+
+  // Fetch TMDB for rated movies using movieMeta titles
+  useEffect(() => {
+    if (activeTab !== "Rated") return;
+    Object.keys(user?.ratings || {}).forEach(movieIdStr => {
+      const id = parseInt(movieIdStr);
+      const meta = movieMeta[id];
+      if (meta?.title && !fetchedIds.has(id)) {
+        fetchMovieTmdb({ movieId: id, title: meta.title, genres: meta.genres });
+      } else if (!meta?.title) {
+        // Mark as fetched so we don't show skeleton forever for unknown movies
+        setFetchedIds(prev => new Set([...prev, id]));
+      }
+    });
+  }, [activeTab, movieMeta]);
 
   async function handleWatchlistRate(movieId, rating) {
     setRatingInProgress(prev => new Set([...prev, movieId]));
@@ -83,14 +98,24 @@ export default function Recommendations() {
   }
 
   async function handleReRate(movieId, rating) {
+    // Update user ratings locally
     const updatedUser = { ...user, ratings: { ...user.ratings, [String(movieId)]: rating } };
     setUser(updatedUser);
+
+    // Submit and refresh recommendations
     try {
-      await axios.post(`${API}/api/rate`, {
+      const knownMovie = movieMeta[movieId];
+      const metaToSend = knownMovie
+        ? [{ movieId, title: knownMovie.title, genres: knownMovie.genres }]
+        : [];
+
+      const res = await axios.post(`${API}/api/rate`, {
         username: user.username,
         character: user.character || "",
         ratings: { [String(movieId)]: rating },
+        movieMeta: metaToSend,
       });
+      await refreshRecommendations(updatedUser, hiddenMovies, res.data.recommendations);
     } catch (e) {
       console.error("Re-rate failed", e);
     }
@@ -172,9 +197,7 @@ export default function Recommendations() {
                 .sort((a, b) => b[1] - a[1])
                 .map(([movieId, rating]) => {
                   const id = parseInt(movieId);
-                  const tmdb = tmdbData[id];
                   const meta = movieMeta[id];
-                  const title = meta?.title;
                   const isFetched = fetchedIds.has(id);
 
                   return (
@@ -182,10 +205,11 @@ export default function Recommendations() {
                       key={movieId}
                       movieId={id}
                       rating={rating}
-                      title={title}
-                      tmdb={tmdb}
+                      title={meta?.title}
+                      tmdb={tmdbData[id]}
                       poster={posters[id]}
                       isFetched={isFetched}
+                      hasMeta={!!meta?.title}
                       onReRate={r => handleReRate(id, r)}
                     />
                   );
@@ -214,7 +238,11 @@ export default function Recommendations() {
                       key={rec.movieId}
                       movie={{ ...rec, posterUrl: posters[rec.movieId] }}
                       communityRating={tmdbData[rec.movieId]?.rating}
-                      onClick={() => setSelectedMovie({ ...rec, posterUrl: posters[rec.movieId], tmdbData: tmdbData[rec.movieId] })}
+                      onClick={() => setSelectedMovie({
+                        ...rec,
+                        posterUrl: posters[rec.movieId],
+                        tmdbData: tmdbData[rec.movieId],
+                      })}
                       onHide={() => {
                         if (activeTab === "Hidden") unhideMovie(rec.movieId);
                         else if (activeTab === "Watchlist") removeFromWatchlist(rec.movieId);
@@ -248,7 +276,7 @@ export default function Recommendations() {
   );
 }
 
-function RatedRow({ movieId, rating, title, tmdb, poster, isFetched, onReRate }) {
+function RatedRow({ movieId, rating, title, tmdb, poster, isFetched, hasMeta, onReRate }) {
   const [hovered, setHovered] = useState(0);
   const [currentRating, setCurrentRating] = useState(rating);
 
@@ -257,10 +285,13 @@ function RatedRow({ movieId, rating, title, tmdb, poster, isFetched, onReRate })
     onReRate(star);
   }
 
+  // If we have no metadata at all, don't show skeleton forever — show unknown
+  const showSkeleton = !isFetched && hasMeta;
+
   return (
     <div style={styles.ratedRow}>
       <div style={styles.ratedPoster}>
-        {!isFetched ? (
+        {showSkeleton ? (
           <div className="skeleton" style={{ width: "100%", height: "100%" }} />
         ) : poster ? (
           <img src={poster} alt="" style={styles.ratedPosterImg} />
@@ -270,14 +301,14 @@ function RatedRow({ movieId, rating, title, tmdb, poster, isFetched, onReRate })
       </div>
       <div style={styles.ratedInfo}>
         <div style={styles.ratedTitle}>
-          {!isFetched ? (
+          {showSkeleton ? (
             <div className="skeleton" style={{ height: "14px", width: "55%", borderRadius: "4px" }} />
           ) : (
             title || <span style={{ color: "var(--tsr-text-muted)", fontStyle: "italic" }}>Unknown title</span>
           )}
         </div>
         <div style={styles.ratedMeta}>
-          {!isFetched ? (
+          {showSkeleton ? (
             <div className="skeleton" style={{ height: "11px", width: "35%", borderRadius: "4px", marginTop: "4px" }} />
           ) : (
             <>
