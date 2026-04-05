@@ -35,31 +35,14 @@ function ModalStarRating({ onRate }) {
 }
 
 const starStyles = {
-  row: {
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-  },
-  label: {
-    fontSize: "13px",
-    color: "var(--tsr-text-muted)",
-    marginRight: "4px",
-  },
+  row: { display: "flex", alignItems: "center", gap: "4px" },
+  label: { fontSize: "13px", color: "var(--tsr-text-muted)", marginRight: "4px" },
   star: {
-    fontSize: "22px",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    padding: "1px",
-    lineHeight: 1,
-    transition: "color 0.1s",
-    fontFamily: "inherit",
+    fontSize: "22px", background: "none", border: "none",
+    cursor: "pointer", padding: "1px", lineHeight: 1,
+    transition: "color 0.1s", fontFamily: "inherit",
   },
-  done: {
-    fontSize: "14px",
-    color: "var(--tsr-teal)",
-    marginLeft: "4px",
-  },
+  done: { fontSize: "14px", color: "var(--tsr-teal)", marginLeft: "4px" },
 };
 
 export default function MovieModal({
@@ -161,7 +144,27 @@ export default function MovieModal({
                 <div style={styles.streamLabel}>Where to watch</div>
                 <div style={styles.streamPills}>
                   {details.streaming.map(s => (
-                    <a key={s.name} href={s.link} target="_blank" rel="noreferrer" style={styles.pill}>
+                    <a
+                      key={s.name}
+                      href={s.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={styles.pill}
+                    >
+                      {s.icon && (
+                        <img
+                          src={s.icon}
+                          alt=""
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            borderRadius: "3px",
+                            marginRight: "6px",
+                            verticalAlign: "middle",
+                            display: "inline-block",
+                          }}
+                        />
+                      )}
                       {s.name}
                     </a>
                   ))}
@@ -176,9 +179,7 @@ export default function MovieModal({
         <div style={styles.footer}>
           <div style={styles.footerLeft}>
             {onHide && (
-              <button style={styles.btnSecondary} onClick={onHide}>
-                Hide
-              </button>
+              <button style={styles.btnSecondary} onClick={onHide}>Hide</button>
             )}
             {onAddToWatchlist && (
               <button
@@ -295,10 +296,12 @@ const styles = {
     gap: "6px",
   },
   pill: {
+    display: "inline-flex",
+    alignItems: "center",
     background: "var(--tsr-warm-gray)",
     border: "1px solid var(--tsr-border)",
     borderRadius: "20px",
-    padding: "6px 16px",
+    padding: "6px 14px",
     fontSize: "13px",
     color: "var(--tsr-navy)",
     textDecoration: "none",

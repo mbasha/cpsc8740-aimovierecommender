@@ -3,63 +3,47 @@ package clients
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 )
 
 type StreamingService struct {
 	Name string `json:"name"`
 	Link string `json:"link"`
+	Icon string `json:"icon"`
 }
 
 func FetchStreamingOptions(tmdbID string) ([]StreamingService, error) {
-	url := fmt.Sprintf(
-		"https://streaming-availability.p.rapidapi.com/shows/movie/%s?country=us",
-		tmdbID,
-	)
+	return nil, nil
+}
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
+func FetchStreamingByTitle(title string) ([]StreamingService, error) {
+	// Strip year from title e.g. "The Dark Knight (2008)" -> "The Dark Knight"
+	cleanTitle := title
+	if idx := strings.Index(title, " ("); idx != -1 {
+		cleanTitle = title[:idx]
 	}
-	req.Header.Set("x-rapidapi-key", os.Getenv("RAPIDAPI_KEY"))
-	req.Header.Set("x-rapidapi-host", os.Getenv("RAPIDAPI_HOST"))
 
-	resp, err := (&http.Client{}).Do(req)
+	pythonURL := os.Getenv("PYTHON_SERVICE_URL")
+	endpoint := fmt.Sprintf("%s/streaming?title=%s", pythonURL, url.QueryEscape(cleanTitle))
+
+	resp, err := http.Get(endpoint)
 	if err != nil {
-		return nil, err
+		return []StreamingService{}, nil
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
-	var result map[string]interface{}
-	json.Unmarshal(bodyBytes, &result)
-
-	streamingOptions, ok := result["streamingOptions"].(map[string]interface{})
-	if !ok {
-		return nil, nil
+	var result struct {
+		Services []StreamingService `json:"services"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return []StreamingService{}, nil
 	}
 
-	usOptions, ok := streamingOptions["us"].([]interface{})
-	if !ok {
-		return nil, nil
+	if result.Services == nil {
+		return []StreamingService{}, nil
 	}
-
-	var services []StreamingService
-	seen := make(map[string]bool)
-	for _, opt := range usOptions {
-		o, ok := opt.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		service, _ := o["service"].(map[string]interface{})
-		name, _ := service["name"].(string)
-		link, _ := o["link"].(string)
-		if name != "" && !seen[name] {
-			seen[name] = true
-			services = append(services, StreamingService{Name: name, Link: link})
-		}
-	}
-	return services, nil
+	return result.Services, nil
 }

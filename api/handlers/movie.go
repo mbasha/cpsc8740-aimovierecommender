@@ -20,11 +20,12 @@ func MovieDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmdbID := fmt.Sprintf("%.0f", movie.ID)
-	streaming, _ := clients.FetchStreamingOptions(tmdbID)
+	// Use title with year for better JustWatch matching
+	searchTitle := fmt.Sprintf("%s (%s)", movie.Title, movie.ReleaseDate[:4])
+	streaming, _ := clients.FetchStreamingByTitle(searchTitle)
 
 	jsonOK(w, map[string]interface{}{
-		"tmdbId":      tmdbID,
+		"tmdbId":      fmt.Sprintf("%.0f", movie.ID),
 		"title":       movie.Title,
 		"overview":    movie.Overview,
 		"releaseDate": movie.ReleaseDate,

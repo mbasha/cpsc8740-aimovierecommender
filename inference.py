@@ -94,5 +94,41 @@ def recommend():
     return jsonify({'recommendations': recommendations})
 
 
+@app.route('/streaming', methods=['GET'])
+def streaming():
+    title = request.args.get('title', '')
+    if not title:
+        return jsonify({'services': []}), 400
+
+    try:
+        from simplejustwatchapi.justwatch import search
+        results = search(title=title, country='US', count=3)
+
+        if not results:
+            return jsonify({'services': []})
+
+        movie = results[0]
+        services = []
+        seen = set()
+
+        for offer in movie.offers:
+            if offer.monetization_type != 'FLATRATE':
+                continue
+            name = offer.package.name
+            if name in seen:
+                continue
+            seen.add(name)
+            services.append({
+                'name': name,
+                'link': offer.url,
+                'icon': offer.package.icon,
+            })
+
+        return jsonify({'services': services})
+
+    except Exception as e:
+        print(f"Streaming lookup error: {e}")
+        return jsonify({'services': []})
+
 if __name__ == '__main__':
     app.run(port=5001, debug=False)
