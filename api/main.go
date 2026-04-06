@@ -36,6 +36,8 @@ func main() {
 		port = "8080"
 	}
 
+	mux.Handle("/", http.FileServer(http.Dir("./dist")))
+
 	log.Printf("Server running on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
