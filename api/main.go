@@ -36,7 +36,18 @@ func main() {
 		port = "8080"
 	}
 
-	mux.Handle("/", http.FileServer(http.Dir("./dist")))
+	// Serve React frontend — handle client-side routing. API routes are handled above, this catches everything else
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		distPath := "./dist"
+		filePath := distPath + r.URL.Path
+
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			// Serve index.html for client-side routing
+			http.ServeFile(w, r, distPath+"/index.html")
+			return
+		}
+		http.FileServer(http.Dir(distPath)).ServeHTTP(w, r)
+	})
 
 	log.Printf("Server running on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, mux))
