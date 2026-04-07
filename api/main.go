@@ -38,7 +38,7 @@ func main() {
 
 	// Serve React frontend — handle client-side routing. API routes are handled above, this catches everything else
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		distPath := "./dist"
+		distPath := "./api/dist"
 		filePath := distPath + r.URL.Path
 
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
