@@ -42,9 +42,9 @@ cpsc8740-aimovierecommender/
     build.sh                # Build for deployment
     reset_db.sh             # Wipe all user data from database
   data/
-    ml-latest-small/        # MovieLens dataset (NOT in git — download separately)
+    ml-latest-small/        # MovieLens dataset
   inference.py              # Python Flask inference + JustWatch streaming service
-  model.pkl                 # Trained SVD model (NOT in git — generate via model.ipynb)
+  model.pkl                 # Trained SVD model
   exploration.ipynb         # Week 4 data exploration notebook
   model.ipynb               # Week 5 model training notebook
   requirements.txt          # Python dependencies for deployment
@@ -119,35 +119,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Download the MovieLens dataset
-
-Go to https://grouplens.org/datasets/movielens/ and download **ml-latest-small**. Unzip into:
-```
-data/ml-latest-small/
-```
-
-### 5. Generate the model
-
-The trained model file (`model.pkl`) is not stored in the repo. Generate it by running all cells in:
-```
-model.ipynb
-```
-
-This takes a few minutes. The file will be saved to the project root.
-
-### 6. Set up Go dependencies
+### 4. Set up Go dependencies
 
 ```bash
 cd api && go mod tidy && cd ..
 ```
 
-### 7. Set up frontend dependencies
+### 5. Set up frontend dependencies
 
 ```bash
 cd frontend && npm install && cd ..
 ```
 
-### 8. Start all services
+### 6. Start all services
 
 ```bash
 make start
@@ -175,24 +159,25 @@ make reset-db   Wipe all user data from the database
 
 ## Deployment (Render)
 
-Two services are deployed on Render:
+Two separate services are deployed on Render:
 
 **Python Inference Service**
-- Build: `pip install -r requirements.txt`
-- Start: `python inference.py`
-- Environment: `PORT=5001`
-- Python version: set by `runtime.txt` (3.11.11)
+- Build command: `pip install -r requirements.txt`
+- Start command: `python inference.py`
+- Binds to: `0.0.0.0:5001` (required for Render port detection)
+- Python version: `3.11.11` (set via `PYTHON_VERSION` environment variable in Render dashboard)
+- Required environment: `TMDB_READ_ACCESS_TOKEN`, `DATABASE_URL`
 
 **Go API + React Frontend**
-- Build: `bash scripts/build.sh`
-- Start: `./api/server`
-- Environment variables:
+- Build command: `bash scripts/build.sh`
+- Start command: `./api/movie-recommender`
+- Port: `8080`
+- Required environment:
   - `DATABASE_URL` — Render internal Postgres URL
   - `TMDB_READ_ACCESS_TOKEN` — your TMDB token
-  - `PYTHON_SERVICE_URL` — internal URL of the Python service on Render
-  - `PORT=8080`
+  - `PYTHON_SERVICE_URL` — internal URL of the Python service (e.g., `http://python-service-name.onrender.com`)
 
-Before deploying, update `frontend/.env.production` with the Go service URL:
+Before deploying, ensure `frontend/.env.production` has the correct Go service URL:
 ```
 VITE_API_URL=https://your-go-service.onrender.com
 ```
