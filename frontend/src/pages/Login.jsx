@@ -47,7 +47,7 @@ export default function Login() {
           <div style={styles.staffList}>
             {[
               { name: "Randy Meeks", role: "Horror specialist. Knows every rule.", color: "var(--tsr-red)" },
-              { name: "The Valets", role: "Action & blockbusters. Maximum enthusiasm.", color: "var(--tsr-teal)" },
+              { name: "The Valets", role: "Action & blockbusters. Maximum enthusiasm.", color: "var(--tsr-orange)" },
               { name: "Abed Nadir", role: "Cinema analyst. Has seen everything twice.", color: "var(--tsr-purple)" },
             ].map(s => (
               <div key={s.name} style={styles.staffItem}>

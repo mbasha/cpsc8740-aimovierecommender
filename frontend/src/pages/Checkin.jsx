@@ -11,10 +11,17 @@ const CHECKIN_LINES = {
   default: "Welcome back. Did you watch anything from your last list?",
 };
 
+const BUTTON_TEXT = {
+  randy: "Time for the sequel lineup →",
+  valets: "Ohhh, you READY? Check THESE out! →",
+  abed: "New arc, new movies →",
+  default: "Update my list →",
+};
+
 const CHARACTER_NAMES = { randy: "Randy", valets: "The Valets", abed: "Abed" };
 const CHARACTER_ACCENT = {
   randy: "var(--tsr-red)",
-  valets: "var(--tsr-teal)",
+  valets: "var(--tsr-orange)",
   abed: "var(--tsr-purple)",
 };
 
@@ -59,6 +66,7 @@ export default function Checkin() {
   const previousRecs = user?.recommendations || [];
   const characterId = user?.character || "default";
   const checkinLine = CHECKIN_LINES[characterId] || CHECKIN_LINES.default;
+  const buttonText = BUTTON_TEXT[characterId] || BUTTON_TEXT.default;
   const characterName = CHARACTER_NAMES[characterId];
   const accentColor = CHARACTER_ACCENT[characterId] || "var(--tsr-navy)";
 
@@ -127,10 +135,7 @@ export default function Checkin() {
           {characterName && <div style={styles.attribution}>— {characterName}</div>}
           <div style={styles.leftActions}>
             <button style={{ ...styles.btnSubmit, background: accentColor }} onClick={handleSubmit}>
-              Update my list →
-            </button>
-            <button style={styles.btnSkip} onClick={() => setRecommendations(previousRecs)}>
-              Skip, show my last list
+              {buttonText}
             </button>
           </div>
         </div>

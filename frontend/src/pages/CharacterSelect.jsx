@@ -21,7 +21,7 @@ const characters = [
     tagline: "Oh SNAAAP. You came to the right guys.",
     description: "The Valets have encyclopedic knowledge of every action movie, blockbuster, and crowd-pleaser ever made. They've seen them all, they remember every scene, and they will not stop talking about them. Maximum enthusiasm, zero chill.",
     mood: "Best for: action, blockbusters, crowd pleasers, anything with a great trailer",
-    accent: "#00b4a6",
+    accent: "#ff6b00",
   },
   {
     id: "abed",

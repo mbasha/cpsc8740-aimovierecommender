@@ -171,7 +171,7 @@ export default function RatingFlow() {
 
   const accentColor = {
     randy: "var(--tsr-red)",
-    valets: "var(--tsr-teal)",
+    valets: "var(--tsr-orange)",
     abed: "var(--tsr-purple)",
   }[character.id] || "var(--tsr-navy)";
 
