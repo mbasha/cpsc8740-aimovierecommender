@@ -123,9 +123,9 @@ export default function Recommendations() {
 
   function getDisplayMovies() {
     switch (activeTab) {
-      case "Recommendations": return recommendations;
-      case "Watchlist": return watchlist;
-      case "Hidden": return hiddenMovies;
+      case "Recommendations": return recommendations || [];
+      case "Watchlist": return watchlist || [];
+      case "Hidden": return hiddenMovies || [];
       default: return [];
     }
   }
