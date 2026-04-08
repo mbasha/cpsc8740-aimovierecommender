@@ -32,15 +32,15 @@ const CHARACTER_MOVIES = {
   ],
   valets: [
     { movieId: 58559, title: "The Dark Knight",                year: 2008, genres: "Action · Thriller" },
-    { movieId: 245891,title: "John Wick",                      year: 2014, genres: "Action · Thriller" },
-    { movieId: 1359,  title: "Training Day",                   year: 2001, genres: "Crime · Drama" },
-    { movieId: 2571,  title: "The Matrix",                     year: 1999, genres: "Action · Sci-Fi" },
-    { movieId: 299534,title: "Avengers: Endgame",              year: 2019, genres: "Action · Adventure" },
-    { movieId: 284054,title: "Black Panther",                  year: 2018, genres: "Action · Adventure" },
-    { movieId: 111,   title: "Scarface",                       year: 1983, genres: "Crime · Drama" },
-    { movieId: 9928,  title: "Friday",                         year: 1995, genres: "Comedy" },
-    { movieId: 13437, title: "Bad Boys II",                    year: 2003, genres: "Action · Comedy" },
-    { movieId: 98,    title: "Gladiator",                      year: 2000, genres: "Action · Drama" },
+    { movieId: 527,   title: "Braveheart",                     year: 1995, genres: "Action · Drama" },
+    { movieId: 4563,  title: "Mad Max The Road Warrior",       year: 1981, genres: "Action · Sci-Fi" },
+    { movieId: 122882,title: "Gravity",                        year: 2013, genres: "Adventure · Sci-Fi" },
+    { movieId: 130976,title: "The Blind Side",                 year: 2009, genres: "Biography · Drama" },
+    { movieId: 132219,title: "Les Misérables",                 year: 2012, genres: "Drama · Musical" },
+    { movieId: 9470,  title: "The Princess Diaries",           year: 2001, genres: "Comedy · Family" },
+    { movieId: 122930,title: "Iron Man",                       year: 2008, genres: "Action · Adventure" },
+    { movieId: 9784,  title: "Tombstone",                      year: 1993, genres: "Action · Western" },
+    { movieId: 265574,title: "Taken",                          year: 2008, genres: "Action · Thriller" },
   ],
 };
 
@@ -65,64 +65,44 @@ const SCRIPTS = {
     intro: "YOOOOO. Okay so check it out. My boy and I — we know MOVIES. Like we're talking encyclopedic knowledge of cinema right here. You want recommendations? We got you. We just need to know what you're working with first. Let's run through some films real quick. LET'S GO.",
     movies: {
       "The Dark Knight": [
-        { valet: "V1", line: "Ledger as the Joker though—" },
-        { valet: "V2", line: "Don't even START me." },
-        { valet: "V1", line: "Greatest performance in a superhero movie EVER." },
-        { valet: "V2", line: "It's not even a superhero movie it's a CRIME DRAMA. Anyway — you rating this or what?" },
+        { valet: "V1", line: "Remember when he took the pencil? And he put the pencil in the table?" },
+        { valet: "V2", line: "And then he put the man's face in the pencil! And the pencil went bloop! Inside the man's face!" },
       ],
-      "John Wick": [
-        { valet: "V1", line: "They killed his dog." },
-        { valet: "V2", line: "BIG mistake." },
-        { valet: "V1", line: "The pencil scene alone puts this in the action hall of fame." },
-        { valet: "V2", line: "What's your rating?" },
+      "Braveheart": [
+        { valet: "V1", line: "Remember when he had taken out a hatchet and chopped up all them Englands?! In the Bravehearts?!" },
+        { valet: "V2", line: "My man was still talking about 'Freedom!' while he was being pulled apart! Racist-ass Melly Gibsons was Blue Man Group in Bravehearts!" },
       ],
-      "Training Day": [
-        { valet: "V1", line: "Denzel Washington in this movie is TERRIFYING." },
-        { valet: "V2", line: "Oscar winning terrifying." },
-        { valet: "V1", line: "King Kong ain't got nothing on him." },
-        { valet: "V2", line: "Rate it." },
+      "Mad Max The Road Warrior": [
+        { valet: "V1", line: "Think about it, man! Remember when he jacked up on them mutants in The Road Warrior?!" },
+        { valet: "V2", line: "And his dog! Remember his dog was his only friend?! That was some heart-touching shiznit!" },
       ],
-      "The Matrix": [
-        { valet: "V1", line: "There is no spoon." },
-        { valet: "V2", line: "THERE IS NO SPOON." },
-        { valet: "V1", line: "The Wachowskis changed action movies forever with this one." },
-        { valet: "V2", line: "What you giving it?" },
+      "Gravity": [
+        { valet: "V1", line: "Sandra Bullocksies is my girl! Remember when she was in the space, and the things was hitting the space things?" },
+        { valet: "V2", line: "And she was like, 'Aaaaahhh! I'm in the space and I can't get down!'" },
       ],
-      "Avengers: Endgame": [
-        { valet: "V1", line: "Twenty-two movies." },
-        { valet: "V2", line: "TWENTY-TWO." },
-        { valet: "V1", line: "All leading to this. The theater was electric." },
-        { valet: "V2", line: "Where does it land for you?" },
+      "The Blind Side": [
+        { valet: "V1", line: "What about when she saw that big giant man and she was like, 'You come live in my house!'" },
+        { valet: "V2", line: "And play the footballs! And I'm gonna give you a bedroom and a sandwich!" },
       ],
-      "Black Panther": [
-        { valet: "V1", line: "Wakanda Forever." },
-        { valet: "V2", line: "This movie was a whole moment." },
-        { valet: "V1", line: "Culturally, cinematically — it hit different." },
-        { valet: "V2", line: "Rate it." },
+      "Les Misérables": [
+        { valet: "V1", line: "But what about when Anne Hathaways was the Les Miz and she was like, 'I'm poor and my hair is gone!'" },
+        { valet: "V2", line: "And she was singing and crying and singing and crying and I was like, 'Give that girl a statue!'" },
       ],
-      "Scarface": [
-        { valet: "V1", line: "Say hello to my little friend." },
-        { valet: "V2", line: "Al Pacino went absolutely insane in this movie." },
-        { valet: "V1", line: "In the best possible way." },
-        { valet: "V2", line: "What's your rating?" },
+      "The Princess Diaries": [
+        { valet: "V1", line: "When she found out she was the queen of the England! And her hair was all crazy!" },
+        { valet: "V2", line: "And then they brushed her hair and she was like, 'I'm a queen now!'" },
       ],
-      "Friday": [
-        { valet: "V1", line: "Smokey. Craig. The porch." },
-        { valet: "V2", line: "A perfect movie." },
-        { valet: "V1", line: "Not an exaggeration." },
-        { valet: "V2", line: "Rate it." },
+      "Iron Man": [
+        { valet: "V1", line: "You know who's good? Robert Downey's Juniors! Tony Stark's... Iron Mans!" },
+        { valet: "V2", line: "He be building his own suit and nobody was even helping him! And he's got that glowing heart in his chest!" },
       ],
-      "Bad Boys II": [
-        { valet: "V1", line: "Will Smith and Martin Lawrence." },
-        { valet: "V2", line: "The freeway chase scene is one for the ages." },
-        { valet: "V1", line: "Michael Bay turned the budget up to eleven." },
-        { valet: "V2", line: "Where does this land for you?" },
+      "Tombstone": [
+        { valet: "V1", line: "You know who was good? Vally Kilmers! Vally Kilmers in Tombstones!" },
+        { valet: "V2", line: "He was all 'I'm your Huckleberry!' and he was coughing and he was sweaty but he was still the fastest!" },
       ],
-      "Gladiator": [
-        { valet: "V1", line: "Are you not entertained?" },
-        { valet: "V2", line: "ARE YOU NOT ENTERTAINED?" },
-        { valet: "V1", line: "Russell Crowe carried that entire film." },
-        { valet: "V2", line: "What's your rating?" },
+      "Taken": [
+        { valet: "V1", line: "Don't even get me started on that one when they took his daughter... straight Tooken." },
+        { valet: "V2", line: "Liam Neeson's is on the phone like, 'I have a certain set of skills! Don't even try and be rushing around Liam Neeson!'" },
       ],
     },
     outro: "We've seen enough. We know exactly what you need. Top ten. Right here. You're welcome in advance.",
