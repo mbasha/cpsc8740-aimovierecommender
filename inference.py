@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect
 import pickle
 import pandas as pd
 from surprise import SVD, Dataset, Reader
@@ -12,6 +12,11 @@ with open('model.pkl', 'rb') as f:
 ratings_df = pd.read_csv('data/ml-latest-small/ratings.csv')
 movies_df = pd.read_csv('data/ml-latest-small/movies.csv')
 print("Ready.")
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return redirect('https://topshelf-api.onrender.com', code=302)
 
 
 def get_recommendations(user_ratings: dict, n: int = 10, exclude_ids: list = None) -> list:
