@@ -3,6 +3,9 @@ package clients
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -34,11 +37,21 @@ func GetRecommendationsWithExclusions(ratings map[string]float64, n int, exclude
 
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
+		log.Printf("Error calling inference service at %s: %v", url, err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		log.Printf("Inference service returned status %d: %s", resp.StatusCode, string(bodyBytes))
+		return nil, fmt.Errorf("inference service returned status %d", resp.StatusCode)
+	}
+
 	var result inferenceResponse
-	json.NewDecoder(resp.Body).Decode(&result)
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		log.Printf("Error decoding inference response: %v", err)
+		return nil, err
+	}
 	return result.Recommendations, nil
 }
